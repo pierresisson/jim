@@ -8,12 +8,12 @@ Assistant personnel pour gérer tes tâches pro/perso et tes habitudes, directem
 # Cloner et installer
 git clone git@github.com:pierresisson/Jim.git
 cd Jim
-npm install
-npm run build
-npm link
+bun install
+bun run build
+bun link
 ```
 
-Requires Node.js >= 19.
+Requires [Bun](https://bun.sh) >= 1.0.
 
 ## Commandes
 
@@ -108,8 +108,8 @@ Stockées dans `~/.jim/data.json`. Le répertoire et les fichiers sont créés a
 ## Dev
 
 ```bash
-npm run build       # Compiler TypeScript
-npm run dev         # Compiler en mode watch
-npm test            # Lancer les tests
-npm run test:watch  # Tests en mode watch
+bun run build       # Compiler TypeScript
+bun run dev         # Compiler en mode watch
+bun test            # Lancer les tests
+bun run test:watch  # Tests en mode watch
 ```
