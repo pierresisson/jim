@@ -1,0 +1,27 @@
+{
+  "name": "jim-cli",
+  "version": "0.1.0",
+  "description": "Personal task & habits assistant CLI",
+  "type": "module",
+  "bin": {
+    "jim": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "picocolors": "^1.1.1"
+  },
+  "engines": {
+    "node": ">=19"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}
