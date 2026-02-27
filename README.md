@@ -4,6 +4,16 @@ Assistant personnel pour gérer tes tâches pro/perso et tes habitudes, directem
 
 **Philosophie** : chaque matin commence vide. Tes tâches ne se reportent pas automatiquement — tu décides consciemment de garder, reporter ou abandonner chaque tâche via `jim review`. Pas de honte, pas de "stale", juste une décision intentionnelle.
 
+## Intégration Claude Code
+
+Jim s'intègre avec Claude Code via un skill global. Claude détecte automatiquement quand tu parles de tâches et utilise `jim` en arrière-plan.
+
+```bash
+# Le skill est installé dans ~/.claude/skills/jim.md
+# Le pointeur est dans ~/.claude/CLAUDE.md
+# Rien à invoquer — Claude le fait tout seul
+```
+
 ## Installation
 
 ```bash
@@ -102,16 +112,6 @@ jim remind
 ```
 
 Affiche un résumé concis : tâches actives par catégorie, progression des habitudes. Si des tâches dormantes existent, te suggère de lancer `jim review`.
-
-## Intégration Claude Code
-
-Jim s'intègre avec Claude Code via un skill global. Claude détecte automatiquement quand tu parles de tâches et utilise `jim` en arrière-plan.
-
-```bash
-# Le skill est installé dans ~/.claude/skills/jim.md
-# Le pointeur est dans ~/.claude/CLAUDE.md
-# Rien à invoquer — Claude le fait tout seul
-```
 
 ## Rappel automatique au terminal
 

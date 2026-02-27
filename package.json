@@ -4,7 +4,7 @@
   "description": "Personal task & habits assistant CLI",
   "type": "module",
   "bin": {
-    "jim": "dist/index.js"
+    "jim": "src/index.ts"
   },
   "scripts": {
     "build": "tsc",
