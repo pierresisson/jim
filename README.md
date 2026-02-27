@@ -2,6 +2,8 @@
 
 Assistant personnel pour gérer tes tâches pro/perso et tes habitudes, directement depuis le terminal.
 
+**Philosophie** : chaque matin commence vide. Tes tâches ne se reportent pas automatiquement — tu décides consciemment de garder, reporter ou abandonner chaque tâche via `jim review`. Pas de honte, pas de "stale", juste une décision intentionnelle.
+
 ## Installation
 
 ```bash
@@ -43,12 +45,25 @@ Options :
 ### `jim list` — Voir les tâches et habitudes
 
 ```bash
-jim list                    # Tâches en cours + habitudes
-jim list -c personal        # Seulement les tâches perso
-jim list --all              # Inclure les tâches terminées
+jim list                    # Tâches actives aujourd'hui + habitudes
+jim list -c personal        # Seulement les tâches perso actives
+jim list --all              # Toutes les tâches (actives, dormantes, abandonnées, terminées)
+jim list --dormant          # Tâches dormantes (pas encore revues aujourd'hui)
+jim list --dropped          # Tâches abandonnées
 ```
 
-Les tâches perso non faites depuis 3+ jours apparaissent avec un tag `[STALE]`.
+Par défaut, seules les tâches actives (revues aujourd'hui) apparaissent. Les anciennes tâches deviennent dormantes et attendent ton `jim review`.
+
+### `jim review` — Revoir les tâches dormantes
+
+```bash
+jim review
+```
+
+Parcourt les tâches dormantes une par une. Pour chaque tâche :
+- **[k]eep** — Remet la tâche active pour aujourd'hui
+- **[d]rop** — Abandonne la tâche (décision consciente, pas une honte)
+- **[s]nooze** — Reporte à une date future
 
 ### `jim next` — Suggestion intelligente
 
@@ -59,8 +74,9 @@ jim next
 L'algorithme prend en compte :
 - La priorité de la tâche
 - Le quota perso quotidien (2 par défaut) — si pas atteint, les tâches perso sont boostées
-- L'ancienneté des tâches perso (staleness boost)
 - L'urgence des habitudes en fin de période
+
+Seules les tâches actives (revues aujourd'hui) sont suggérées.
 
 ### `jim done <id>` — Marquer comme fait
 
@@ -75,7 +91,7 @@ jim done --last             # Complète la dernière suggestion de `jim next`
 jim remind
 ```
 
-Affiche un résumé concis : tâches en cours par catégorie, progression des habitudes, alertes stale.
+Affiche un résumé concis : tâches actives par catégorie, progression des habitudes. Si des tâches dormantes existent, te suggère de lancer `jim review`.
 
 ## Rappel automatique au terminal
 
@@ -103,7 +119,7 @@ Le fichier `~/.jim/config.json` contient :
 
 ## Données
 
-Stockées dans `~/.jim/data.json`. Le répertoire et les fichiers sont créés automatiquement au premier lancement.
+Stockées dans `~/.jim/data.json`. Le répertoire et les fichiers sont créés automatiquement au premier lancement. Les anciens fichiers sans les champs `status`/`lastReviewedAt` sont migrés automatiquement au chargement.
 
 ## Dev
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getNextTask } from './scheduler.js';
+import { getNextTask, getActiveTasks, getDormantTasks } from './scheduler.js';
 import type { JimData, JimConfig, Task, Habit } from './types.js';
 
 const defaultConfig: JimConfig = { personalDailyQuota: 2, reminderEnabled: true };
@@ -12,6 +12,8 @@ function makeTask(overrides: Partial<Task> = {}): Task {
     priority: 'medium',
     createdAt: new Date().toISOString(),
     done: false,
+    lastReviewedAt: new Date().toISOString(),
+    status: 'active',
     ...overrides,
   };
 }
@@ -49,7 +51,6 @@ describe('getNextTask', () => {
       ],
       habits: [],
     };
-    // Disable personal quota boost by having pro tasks only with quota met
     const config: JimConfig = { personalDailyQuota: 0, reminderEnabled: true };
     const result = getNextTask(data, config);
     expect(result?.item.id).toBe('high');
@@ -68,18 +69,27 @@ describe('getNextTask', () => {
     expect(result?.item.id).toBe('personal-low');
   });
 
-  it('adds staleness boost for old personal tasks', () => {
-    const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
+  it('ignores dormant tasks (not reviewed today)', () => {
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const data: JimData = {
       tasks: [
-        makeTask({ id: 'stale', priority: 'low', category: 'personal', createdAt: fiveDaysAgo }),
+        makeTask({ id: 'dormant', priority: 'high', lastReviewedAt: yesterday }),
       ],
       habits: [],
     };
     const result = getNextTask(data, defaultConfig);
-    expect(result).not.toBeNull();
-    // low(2) + staleness(5) + quota(15) = 22
-    expect(result!.score).toBeGreaterThanOrEqual(20);
+    expect(result).toBeNull();
+  });
+
+  it('ignores dropped tasks', () => {
+    const data: JimData = {
+      tasks: [
+        makeTask({ id: 'dropped', priority: 'high', status: 'dropped' }),
+      ],
+      habits: [],
+    };
+    const result = getNextTask(data, defaultConfig);
+    expect(result).toBeNull();
   });
 
   it('suggests habit when needing completion', () => {
@@ -108,5 +118,41 @@ describe('getNextTask', () => {
     };
     const result = getNextTask(data, defaultConfig);
     expect(result?.reason).toBeTruthy();
+  });
+});
+
+describe('getActiveTasks', () => {
+  it('returns only active tasks reviewed today', () => {
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const data: JimData = {
+      tasks: [
+        makeTask({ id: 'active-today', status: 'active' }),
+        makeTask({ id: 'dormant', status: 'active', lastReviewedAt: yesterday }),
+        makeTask({ id: 'dropped', status: 'dropped' }),
+        makeTask({ id: 'done', done: true }),
+      ],
+      habits: [],
+    };
+    const result = getActiveTasks(data);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('active-today');
+  });
+});
+
+describe('getDormantTasks', () => {
+  it('returns not-reviewed, non-dropped, non-done tasks', () => {
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const data: JimData = {
+      tasks: [
+        makeTask({ id: 'dormant-1', lastReviewedAt: yesterday }),
+        makeTask({ id: 'active-today' }),
+        makeTask({ id: 'dropped', status: 'dropped', lastReviewedAt: yesterday }),
+        makeTask({ id: 'done', done: true, lastReviewedAt: yesterday }),
+      ],
+      habits: [],
+    };
+    const result = getDormantTasks(data);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('dormant-1');
   });
 });

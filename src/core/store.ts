@@ -3,6 +3,7 @@ import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
 import type { IStore, JimData, JimConfig } from './types.js';
+import { migrateTask } from './utils.js';
 
 export const DEFAULT_DATA: JimData = { tasks: [], habits: [] };
 export const DEFAULT_CONFIG: JimConfig = { personalDailyQuota: 2, reminderEnabled: true };
@@ -45,7 +46,9 @@ export class JsonStore implements IStore {
       atomicWrite(this.dataFile, JSON.stringify(DEFAULT_DATA, null, 2));
       return { tasks: [], habits: [] };
     }
-    return safeParse<JimData>(this.dataFile, { tasks: [], habits: [] });
+    const data = safeParse<JimData>(this.dataFile, { tasks: [], habits: [] });
+    data.tasks = data.tasks.map(migrateTask);
+    return data;
   }
 
   save(data: JimData): void {

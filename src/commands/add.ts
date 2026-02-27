@@ -43,13 +43,16 @@ export function registerAddCommand(program: Command): void {
         console.log(pc.green(`✓ Habit added: "${title}" (${habit.frequency}x/${habit.period})`));
         console.log(pc.dim(`  ID: ${habit.id}`));
       } else {
+        const now = new Date().toISOString();
         const task: Task = {
           id: crypto.randomUUID(),
           title,
           category: opts.category,
           priority: opts.priority,
-          createdAt: new Date().toISOString(),
+          createdAt: now,
           done: false,
+          lastReviewedAt: now,
+          status: 'active',
         };
         data.tasks.push(task);
         store.save(data);

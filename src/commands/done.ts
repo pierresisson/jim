@@ -32,8 +32,8 @@ export function registerDoneCommand(program: Command): void {
         return;
       }
 
-      // Find matching tasks
-      const matchingTasks = data.tasks.filter((t) => t.id === targetId || t.id.startsWith(targetId));
+      // Find matching tasks (exclude dropped)
+      const matchingTasks = data.tasks.filter((t) => t.status !== 'dropped' && (t.id === targetId || t.id.startsWith(targetId)));
       const matchingHabits = data.habits.filter((h) => h.id === targetId || h.id.startsWith(targetId));
       const totalMatches = matchingTasks.length + matchingHabits.length;
 

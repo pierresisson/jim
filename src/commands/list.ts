@@ -1,10 +1,9 @@
 import type { Command } from 'commander';
 import pc from 'picocolors';
 import { JsonStore } from '../core/store.js';
-import { daysSince, getCompletionsThisPeriod } from '../core/utils.js';
+import { getCompletionsThisPeriod, isReviewedToday } from '../core/utils.js';
+import { getDormantTasks } from '../core/scheduler.js';
 import type { Task, Habit } from '../core/types.js';
-
-const STALE_DAYS = 3;
 
 function priorityColor(priority: string): (text: string) => string {
   if (priority === 'high') return pc.red;
@@ -18,7 +17,13 @@ function priorityOrder(priority: string): number {
   return 2;
 }
 
-function displayTasks(tasks: Task[], category: string): void {
+function statusTag(task: Task): string {
+  if (task.status === 'dormant') return pc.yellow(' [DORMANT]');
+  if (task.status === 'dropped') return pc.red(' [DROPPED]');
+  return '';
+}
+
+function displayTasks(tasks: Task[], category: string, showStatusTags: boolean): void {
   if (tasks.length === 0) return;
 
   console.log(pc.bold(pc.underline(`\n${category.toUpperCase()}`)));
@@ -28,12 +33,11 @@ function displayTasks(tasks: Task[], category: string): void {
   for (const task of sorted) {
     const color = priorityColor(task.priority);
     const status = task.done ? pc.dim('✓') : '○';
-    const stale = !task.done && task.category === 'personal' && daysSince(task.createdAt) >= STALE_DAYS;
-    const staleTag = stale ? pc.red(' [STALE]') : '';
+    const tag = showStatusTags ? statusTag(task) : '';
     const doneStyle = task.done ? pc.strikethrough : (s: string) => s;
 
     console.log(
-      `  ${status} ${doneStyle(task.title)} ${color(task.priority)}${staleTag} ${pc.dim(task.id.slice(0, 8))}`
+      `  ${status} ${doneStyle(task.title)} ${color(task.priority)}${tag} ${pc.dim(task.id.slice(0, 8))}`
     );
   }
 }
@@ -56,15 +60,30 @@ export function registerListCommand(program: Command): void {
     .command('list')
     .description('List tasks and habits')
     .option('-c, --category <category>', 'Filter by category: pro or personal')
-    .option('-a, --all', 'Show completed tasks too')
-    .action((opts: { category?: string; all?: boolean }) => {
+    .option('-a, --all', 'Show all tasks (active, dormant, dropped, done)')
+    .option('--dormant', 'Show dormant tasks (not reviewed today)')
+    .option('--dropped', 'Show dropped tasks')
+    .action((opts: { category?: string; all?: boolean; dormant?: boolean; dropped?: boolean }) => {
       const store = new JsonStore();
       const data = store.load();
 
-      let tasks = data.tasks;
-      if (!opts.all) {
-        tasks = tasks.filter((t) => !t.done);
+      let tasks: Task[];
+      let showStatusTags = false;
+
+      if (opts.all) {
+        tasks = data.tasks;
+        showStatusTags = true;
+      } else if (opts.dormant) {
+        tasks = getDormantTasks(data);
+        showStatusTags = true;
+      } else if (opts.dropped) {
+        tasks = data.tasks.filter((t) => t.status === 'dropped');
+        showStatusTags = true;
+      } else {
+        // Default: only active tasks reviewed today (not done)
+        tasks = data.tasks.filter((t) => !t.done && t.status === 'active' && isReviewedToday(t));
       }
+
       if (opts.category) {
         tasks = tasks.filter((t) => t.category === opts.category);
       }
@@ -73,12 +92,17 @@ export function registerListCommand(program: Command): void {
       const personalTasks = tasks.filter((t) => t.category === 'personal');
 
       if (proTasks.length === 0 && personalTasks.length === 0 && data.habits.length === 0) {
-        console.log(pc.dim('No tasks or habits yet. Use `jim add` to get started.'));
+        const dormant = getDormantTasks(data);
+        if (dormant.length > 0) {
+          console.log(pc.dim(`No active tasks today. ${dormant.length} dormant — run \`jim review\` to decide.`));
+        } else {
+          console.log(pc.dim('No tasks or habits yet. Use `jim add` to get started.'));
+        }
         return;
       }
 
-      displayTasks(proTasks, 'pro');
-      displayTasks(personalTasks, 'personal');
+      displayTasks(proTasks, 'pro', showStatusTags);
+      displayTasks(personalTasks, 'personal', showStatusTags);
 
       if (!opts.category) {
         displayHabits(data.habits);

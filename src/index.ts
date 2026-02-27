@@ -9,6 +9,7 @@ import { registerListCommand } from './commands/list.js';
 import { registerNextCommand } from './commands/next.js';
 import { registerDoneCommand } from './commands/done.js';
 import { registerRemindCommand } from './commands/remind.js';
+import { registerReviewCommand } from './commands/review.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
@@ -25,5 +26,6 @@ registerListCommand(program);
 registerNextCommand(program);
 registerDoneCommand(program);
 registerRemindCommand(program);
+registerReviewCommand(program);
 
 program.parse(process.argv);

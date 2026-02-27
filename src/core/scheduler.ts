@@ -1,5 +1,5 @@
 import type { Task, Habit, JimData, JimConfig } from './types.js';
-import { daysSince, getCompletionsThisPeriod } from './utils.js';
+import { getCompletionsThisPeriod, isReviewedToday } from './utils.js';
 
 export interface Suggestion {
   item: Task | Habit;
@@ -18,36 +18,32 @@ function personalTasksDoneToday(data: JimData): number {
 function getDaysLeftInPeriod(period: 'day' | 'week'): number {
   if (period === 'day') return 0;
   const now = new Date();
-  const dayOfWeek = now.getDay(); // 0=Sunday
-  // Week starts Sunday, so days left = 6 - dayOfWeek
-  // But Sunday is day 0 of the week, so there are 6 days left
-  // Saturday (6) has 0 days left — correct
-  // To include today as a usable day, we count today + remaining
+  const dayOfWeek = now.getDay();
   return 6 - dayOfWeek;
 }
 
 const PRIORITY_SCORE: Record<string, number> = { high: 10, medium: 5, low: 2 };
+
+/** Returns tasks that are active and reviewed today (eligible for `jim next`). */
+export function getActiveTasks(data: JimData): Task[] {
+  return data.tasks.filter((t) => !t.done && t.status === 'active' && isReviewedToday(t));
+}
+
+/** Returns tasks that are dormant (not reviewed today, not done, not dropped). */
+export function getDormantTasks(data: JimData): Task[] {
+  return data.tasks.filter((t) => !t.done && t.status !== 'dropped' && !isReviewedToday(t));
+}
 
 export function getNextTask(data: JimData, config: JimConfig): Suggestion | null {
   const suggestions: Suggestion[] = [];
   const personalDoneToday = personalTasksDoneToday(data);
   const quotaNotMet = personalDoneToday < config.personalDailyQuota;
 
-  for (const task of data.tasks) {
-    if (task.done) continue;
+  const activeTasks = getActiveTasks(data);
 
+  for (const task of activeTasks) {
     let score = PRIORITY_SCORE[task.priority] ?? 5;
     let reason = `Priority: ${task.priority}`;
-
-    if (task.category === 'personal') {
-      const stale = daysSince(task.createdAt);
-      if (stale > 0) {
-        score += stale;
-        if (stale >= 3) {
-          reason = `Sitting for ${stale} days — time to tackle it`;
-        }
-      }
-    }
 
     if (task.category === 'personal' && quotaNotMet) {
       score += 15;

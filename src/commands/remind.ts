@@ -1,9 +1,8 @@
 import type { Command } from 'commander';
 import pc from 'picocolors';
 import { JsonStore } from '../core/store.js';
-import { daysSince, getCompletionsThisPeriod } from '../core/utils.js';
-
-const STALE_DAYS = 3;
+import { getCompletionsThisPeriod } from '../core/utils.js';
+import { getActiveTasks, getDormantTasks } from '../core/scheduler.js';
 
 export function registerRemindCommand(program: Command): void {
   program
@@ -21,28 +20,27 @@ export function registerRemindCommand(program: Command): void {
         return;
       }
 
-      const pendingPro = data.tasks.filter((t) => !t.done && t.category === 'pro').length;
-      const pendingPersonal = data.tasks.filter((t) => !t.done && t.category === 'personal').length;
-      const stale = data.tasks.filter(
-        (t) => !t.done && t.category === 'personal' && daysSince(t.createdAt) >= STALE_DAYS
-      );
+      const active = getActiveTasks(data);
+      const dormant = getDormantTasks(data);
+      const activePro = active.filter((t) => t.category === 'pro').length;
+      const activePersonal = active.filter((t) => t.category === 'personal').length;
 
       const habitSummary = data.habits.map((h) => {
         const done = getCompletionsThisPeriod(h);
         return { title: h.title, done, total: h.frequency, period: h.period };
       });
 
-      if (pendingPro === 0 && pendingPersonal === 0 && data.habits.length === 0) return;
+      if (activePro === 0 && activePersonal === 0 && data.habits.length === 0 && dormant.length === 0) return;
 
-      console.log(pc.bold('Jim:') + ` ${pendingPro} pro, ${pendingPersonal} personal pending`);
+      console.log(pc.bold('Jim:') + ` ${activePro} pro, ${activePersonal} personal active today`);
 
       if (habitSummary.length > 0) {
         const parts = habitSummary.map((h) => `${h.title} ${h.done}/${h.total}`);
         console.log(pc.dim(`  Habits: ${parts.join(' | ')}`));
       }
 
-      if (stale.length > 0) {
-        console.log(pc.red(`  ⚠ ${stale.length} personal task${stale.length > 1 ? 's' : ''} stale (>3 days)`));
+      if (dormant.length > 0) {
+        console.log(pc.yellow(`  ${dormant.length} task${dormant.length > 1 ? 's' : ''} from before — run \`jim review\``));
       }
     });
 }

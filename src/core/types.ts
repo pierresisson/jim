@@ -1,3 +1,5 @@
+export type TaskStatus = 'active' | 'dormant' | 'dropped';
+
 export interface Task {
   id: string;
   title: string;
@@ -6,6 +8,10 @@ export interface Task {
   createdAt: string;
   completedAt?: string;
   done: boolean;
+  lastReviewedAt: string;
+  status: TaskStatus;
+  snoozedUntil?: string;
+  droppedAt?: string;
 }
 
 export interface Habit {
