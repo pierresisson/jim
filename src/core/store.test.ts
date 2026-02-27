@@ -58,16 +58,16 @@ describe('JsonStore', () => {
     it('returns default config on corrupt JSON', () => {
       fs.writeFileSync(path.join(tmpDir, 'config.json'), 'not json');
       const config = store.loadConfig();
-      expect(config.personalDailyQuota).toBe(2);
+      expect(config.persoDailyQuota).toBe(2);
     });
   });
 
   describe('saveConfig()', () => {
     it('persists config to disk', () => {
-      store.saveConfig({ personalDailyQuota: 5, reminderEnabled: false });
+      store.saveConfig({ persoDailyQuota: 5, reminderEnabled: false });
       const raw = fs.readFileSync(path.join(tmpDir, 'config.json'), 'utf-8');
       const config = JSON.parse(raw);
-      expect(config.personalDailyQuota).toBe(5);
+      expect(config.persoDailyQuota).toBe(5);
       expect(config.reminderEnabled).toBe(false);
     });
   });

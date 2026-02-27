@@ -8,10 +8,10 @@ export interface Suggestion {
   reason: string;
 }
 
-function personalTasksDoneToday(data: JimData): number {
+function persoTasksDoneToday(data: JimData): number {
   const today = new Date().toDateString();
   return data.tasks.filter(
-    (t) => t.category === 'personal' && t.done && t.completedAt && new Date(t.completedAt).toDateString() === today
+    (t) => t.category === 'perso' && t.done && t.completedAt && new Date(t.completedAt).toDateString() === today
   ).length;
 }
 
@@ -36,8 +36,8 @@ export function getDormantTasks(data: JimData): Task[] {
 
 export function getNextTask(data: JimData, config: JimConfig): Suggestion | null {
   const suggestions: Suggestion[] = [];
-  const personalDoneToday = personalTasksDoneToday(data);
-  const quotaNotMet = personalDoneToday < config.personalDailyQuota;
+  const persoDoneToday = persoTasksDoneToday(data);
+  const quotaNotMet = persoDoneToday < config.persoDailyQuota;
 
   const activeTasks = getActiveTasks(data);
 
@@ -45,11 +45,11 @@ export function getNextTask(data: JimData, config: JimConfig): Suggestion | null
     let score = PRIORITY_SCORE[task.priority] ?? 5;
     let reason = `Priority: ${task.priority}`;
 
-    if (task.category === 'personal' && quotaNotMet) {
+    if (task.category === 'perso' && quotaNotMet) {
       score += 15;
-      reason = `You haven't done any personal tasks today (0/${config.personalDailyQuota} quota)`;
-      if (personalDoneToday > 0) {
-        reason = `Personal quota not met yet (${personalDoneToday}/${config.personalDailyQuota})`;
+      reason = `Pas encore de tâche perso aujourd'hui (0/${config.persoDailyQuota} quota)`;
+      if (persoDoneToday > 0) {
+        reason = `Quota perso pas atteint (${persoDoneToday}/${config.persoDailyQuota})`;
       }
     }
 

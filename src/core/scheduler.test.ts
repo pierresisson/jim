@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { getNextTask, getActiveTasks, getDormantTasks } from './scheduler.js';
 import type { JimData, JimConfig, Task, Habit } from './types.js';
 
-const defaultConfig: JimConfig = { personalDailyQuota: 2, reminderEnabled: true };
+const defaultConfig: JimConfig = { persoDailyQuota: 2, reminderEnabled: true };
 
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
@@ -51,22 +51,22 @@ describe('getNextTask', () => {
       ],
       habits: [],
     };
-    const config: JimConfig = { personalDailyQuota: 0, reminderEnabled: true };
+    const config: JimConfig = { persoDailyQuota: 0, reminderEnabled: true };
     const result = getNextTask(data, config);
     expect(result?.item.id).toBe('high');
   });
 
-  it('boosts personal tasks when daily quota not met', () => {
+  it('boosts perso tasks when daily quota not met', () => {
     const data: JimData = {
       tasks: [
         makeTask({ id: 'pro-high', priority: 'high', category: 'pro' }),
-        makeTask({ id: 'personal-low', priority: 'low', category: 'personal' }),
+        makeTask({ id: 'perso-low', priority: 'low', category: 'perso' }),
       ],
       habits: [],
     };
     const result = getNextTask(data, defaultConfig);
-    // personal-low gets low(2) + quota boost(15) = 17, pro-high gets 10
-    expect(result?.item.id).toBe('personal-low');
+    // perso-low gets low(2) + quota boost(15) = 17, pro-high gets 10
+    expect(result?.item.id).toBe('perso-low');
   });
 
   it('ignores dormant tasks (not reviewed today)', () => {
@@ -113,7 +113,7 @@ describe('getNextTask', () => {
 
   it('includes reason in suggestion', () => {
     const data: JimData = {
-      tasks: [makeTask({ category: 'personal' })],
+      tasks: [makeTask({ category: 'perso' })],
       habits: [],
     };
     const result = getNextTask(data, defaultConfig);

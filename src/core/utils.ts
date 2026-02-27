@@ -31,13 +31,17 @@ export function isSnoozedPastToday(task: Task): boolean {
   return snoozeDate > today;
 }
 
-/** Migrate a task from the old schema (no status/lastReviewedAt) to the new one. */
+/** Migrate a task from the old schema to the new one. */
 export function migrateTask(task: Task): Task {
   if (!task.status) {
     task.status = 'active';
   }
   if (!task.lastReviewedAt) {
     task.lastReviewedAt = task.createdAt;
+  }
+  // Rename old 'personal' category to 'perso'
+  if ((task.category as string) === 'personal') {
+    task.category = 'perso';
   }
   return task;
 }

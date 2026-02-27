@@ -7,20 +7,21 @@ import type { Task, Habit } from '../core/types.js';
 
 export function registerAddCommand(program: Command): void {
   program
-    .command('add <title>')
+    .command('add <title...>')
     .description('Add a task or habit')
-    .addOption(new Option('-c, --category <category>', 'Category: pro or personal').choices(['pro', 'personal']).default('pro'))
+    .addOption(new Option('-c, --category <category>', 'Category: pro or perso').choices(['pro', 'perso']).default('pro'))
     .addOption(new Option('-p, --priority <priority>', 'Priority: high, medium, or low').choices(['high', 'medium', 'low']).default('medium'))
     .option('--habit', 'Create a recurring habit instead of a task')
     .option('--frequency <n>', 'How many times per period (for habits)', '1')
     .addOption(new Option('--period <period>', 'Period: day or week (for habits)').choices(['day', 'week']).default('week'))
-    .action((title: string, opts: {
-      category: 'pro' | 'personal';
+    .action((words: string[], opts: {
+      category: 'pro' | 'perso';
       priority: 'high' | 'medium' | 'low';
       habit?: boolean;
       frequency: string;
       period: 'day' | 'week';
     }) => {
+      const title = words.join(' ');
       const store = new JsonStore();
       const data = store.load();
 

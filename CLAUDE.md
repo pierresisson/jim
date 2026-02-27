@@ -16,6 +16,7 @@ When assisting with Jim:
 - Never automatically report or carry over dormant tasks
 - Present `jim review` as a neutral action, not an obligation
 - Respect drops — a dropped task is a conscious choice, not a mistake
+- Always update `README.md` when making an important change (new command, changed behavior, new option, etc.)
 
 ## Architecture
 

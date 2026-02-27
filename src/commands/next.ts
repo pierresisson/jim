@@ -4,11 +4,11 @@ import { JsonStore } from '../core/store.js';
 import { getNextTask } from '../core/scheduler.js';
 import type { Task } from '../core/types.js';
 
-function personalTasksDoneToday(store: JsonStore): number {
+function persoTasksDoneToday(store: JsonStore): number {
   const data = store.load();
   const today = new Date().toDateString();
   return data.tasks.filter(
-    (t) => t.category === 'personal' && t.done && t.completedAt && new Date(t.completedAt).toDateString() === today
+    (t) => t.category === 'perso' && t.done && t.completedAt && new Date(t.completedAt).toDateString() === today
   ).length;
 }
 
@@ -28,7 +28,7 @@ export function registerNextCommand(program: Command): void {
         return;
       }
 
-      const doneToday = personalTasksDoneToday(store);
+      const doneToday = persoTasksDoneToday(store);
 
       console.log(pc.bold('\n  Next up:'));
 
@@ -43,7 +43,7 @@ export function registerNextCommand(program: Command): void {
       }
 
       console.log(`  ${pc.dim(suggestion.reason)}`);
-      console.log(`  ${pc.dim(`Personal today: ${doneToday}/${config.personalDailyQuota}`)}`);
+      console.log(`  ${pc.dim(`Perso today: ${doneToday}/${config.persoDailyQuota}`)}`);
       console.log(`  ${pc.dim(`ID: ${suggestion.item.id}`)}\n`);
     });
 }

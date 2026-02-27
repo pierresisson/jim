@@ -23,16 +23,16 @@ export function registerRemindCommand(program: Command): void {
       const active = getActiveTasks(data);
       const dormant = getDormantTasks(data);
       const activePro = active.filter((t) => t.category === 'pro').length;
-      const activePersonal = active.filter((t) => t.category === 'personal').length;
+      const activePerso = active.filter((t) => t.category === 'perso').length;
 
       const habitSummary = data.habits.map((h) => {
         const done = getCompletionsThisPeriod(h);
         return { title: h.title, done, total: h.frequency, period: h.period };
       });
 
-      if (activePro === 0 && activePersonal === 0 && data.habits.length === 0 && dormant.length === 0) return;
+      if (activePro === 0 && activePerso === 0 && data.habits.length === 0 && dormant.length === 0) return;
 
-      console.log(pc.bold('Jim:') + ` ${activePro} pro, ${activePersonal} personal active today`);
+      console.log(pc.bold('Jim:') + ` ${activePro} pro, ${activePerso} perso active today`);
 
       if (habitSummary.length > 0) {
         const parts = habitSummary.map((h) => `${h.title} ${h.done}/${h.total}`);

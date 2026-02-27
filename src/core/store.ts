@@ -6,7 +6,7 @@ import type { IStore, JimData, JimConfig } from './types.js';
 import { migrateTask } from './utils.js';
 
 export const DEFAULT_DATA: JimData = { tasks: [], habits: [] };
-export const DEFAULT_CONFIG: JimConfig = { personalDailyQuota: 2, reminderEnabled: true };
+export const DEFAULT_CONFIG: JimConfig = { persoDailyQuota: 2, reminderEnabled: true };
 
 function atomicWrite(filePath: string, content: string): void {
   const tmpPath = filePath + '.' + crypto.randomUUID() + '.tmp';
@@ -62,7 +62,11 @@ export class JsonStore implements IStore {
       atomicWrite(this.configFile, JSON.stringify(DEFAULT_CONFIG, null, 2));
       return { ...DEFAULT_CONFIG };
     }
-    return safeParse<JimConfig>(this.configFile, { ...DEFAULT_CONFIG });
+    const raw = safeParse<Record<string, unknown>>(this.configFile, {});
+    // Migrate old personalDailyQuota → persoDailyQuota
+    const quota = (raw.persoDailyQuota ?? raw.personalDailyQuota ?? DEFAULT_CONFIG.persoDailyQuota) as number;
+    const enabled = (raw.reminderEnabled ?? DEFAULT_CONFIG.reminderEnabled) as boolean;
+    return { persoDailyQuota: quota, reminderEnabled: enabled };
   }
 
   saveConfig(config: JimConfig): void {

@@ -27,8 +27,8 @@ jim add "Review PR #42"
 jim add "Review PR #42" -c pro -p high
 
 # Tâche perso
-jim add "Configurer filtre Brita" -c personal
-jim add "Appeler le plombier" -c personal -p high
+jim add "Configurer filtre Brita" -c perso
+jim add "Appeler le plombier" -c perso -p high
 
 # Habitude récurrente
 jim add "Promener le chien" --habit --frequency 4 --period week
@@ -36,7 +36,7 @@ jim add "Méditer" --habit --frequency 1 --period day
 ```
 
 Options :
-- `-c, --category <pro|personal>` — Catégorie (défaut: `pro`)
+- `-c, --category <pro|perso>` — Catégorie (défaut: `pro`)
 - `-p, --priority <high|medium|low>` — Priorité (défaut: `medium`)
 - `--habit` — Créer une habitude au lieu d'une tâche
 - `--frequency <n>` — Nombre de fois par période (habitudes)
@@ -46,7 +46,7 @@ Options :
 
 ```bash
 jim list                    # Tâches actives aujourd'hui + habitudes
-jim list -c personal        # Seulement les tâches perso actives
+jim list -c perso        # Seulement les tâches perso
 jim list --all              # Toutes les tâches (actives, dormantes, abandonnées, terminées)
 jim list --dormant          # Tâches dormantes (pas encore revues aujourd'hui)
 jim list --dropped          # Tâches abandonnées
@@ -85,6 +85,14 @@ jim done 222d8738           # Par ID (préfixe partiel accepté)
 jim done --last             # Complète la dernière suggestion de `jim next`
 ```
 
+### `jim delete <id>` — Supprimer définitivement
+
+```bash
+jim delete 222d8738         # Par ID (préfixe partiel accepté)
+```
+
+Supprime définitivement une tâche ou une habitude du fichier de données.
+
 ### `jim remind` — Rappel rapide
 
 ```bash
@@ -109,12 +117,12 @@ Le fichier `~/.jim/config.json` contient :
 
 ```json
 {
-  "personalDailyQuota": 2,
+  "persoDailyQuota": 2,
   "reminderEnabled": true
 }
 ```
 
-- `personalDailyQuota` — Nombre de tâches perso à faire par jour avant que l'algo arrête de les booster
+- `persoDailyQuota` — Nombre de tâches perso à faire par jour avant que l'algo arrête de les booster
 - `reminderEnabled` — Active/désactive le rappel terminal
 
 ## Données

@@ -59,7 +59,7 @@ export function registerListCommand(program: Command): void {
   program
     .command('list')
     .description('List tasks and habits')
-    .option('-c, --category <category>', 'Filter by category: pro or personal')
+    .option('-c, --category <category>', 'Filter by category: pro or perso')
     .option('-a, --all', 'Show all tasks (active, dormant, dropped, done)')
     .option('--dormant', 'Show dormant tasks (not reviewed today)')
     .option('--dropped', 'Show dropped tasks')
@@ -89,9 +89,9 @@ export function registerListCommand(program: Command): void {
       }
 
       const proTasks = tasks.filter((t) => t.category === 'pro');
-      const personalTasks = tasks.filter((t) => t.category === 'personal');
+      const persoTasks = tasks.filter((t) => t.category === 'perso');
 
-      if (proTasks.length === 0 && personalTasks.length === 0 && data.habits.length === 0) {
+      if (proTasks.length === 0 && persoTasks.length === 0 && data.habits.length === 0) {
         const dormant = getDormantTasks(data);
         if (dormant.length > 0) {
           console.log(pc.dim(`No active tasks today. ${dormant.length} dormant — run \`jim review\` to decide.`));
@@ -102,7 +102,7 @@ export function registerListCommand(program: Command): void {
       }
 
       displayTasks(proTasks, 'pro', showStatusTags);
-      displayTasks(personalTasks, 'personal', showStatusTags);
+      displayTasks(persoTasks, 'perso', showStatusTags);
 
       if (!opts.category) {
         displayHabits(data.habits);

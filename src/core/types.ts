@@ -3,7 +3,7 @@ export type TaskStatus = 'active' | 'dormant' | 'dropped';
 export interface Task {
   id: string;
   title: string;
-  category: 'pro' | 'personal';
+  category: 'pro' | 'perso';
   priority: 'high' | 'medium' | 'low';
   createdAt: string;
   completedAt?: string;
@@ -28,7 +28,7 @@ export interface JimData {
 }
 
 export interface JimConfig {
-  personalDailyQuota: number;
+  persoDailyQuota: number;
   reminderEnabled: boolean;
 }
 
