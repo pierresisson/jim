@@ -21,14 +21,16 @@ Requires [Bun](https://bun.sh) >= 1.0.
 
 ### `jim add <title>` — Ajouter une tâche ou habitude
 
+Les guillemets sont optionnels — `jim add faire les courses` marche aussi bien que `jim add "faire les courses"`.
+
 ```bash
 # Tâche pro (défaut)
-jim add "Review PR #42"
-jim add "Review PR #42" -c pro -p high
+jim add Review PR #42
+jim add Review PR #42 -c pro -p high
 
 # Tâche perso
-jim add "Configurer filtre Brita" -c perso
-jim add "Appeler le plombier" -c perso -p high
+jim add Configurer filtre Brita -c perso
+jim add Appeler le plombier -c perso -p high
 
 # Habitude récurrente
 jim add "Promener le chien" --habit --frequency 4 --period week
@@ -100,6 +102,16 @@ jim remind
 ```
 
 Affiche un résumé concis : tâches actives par catégorie, progression des habitudes. Si des tâches dormantes existent, te suggère de lancer `jim review`.
+
+## Intégration Claude Code
+
+Jim s'intègre avec Claude Code via un skill global. Claude détecte automatiquement quand tu parles de tâches et utilise `jim` en arrière-plan.
+
+```bash
+# Le skill est installé dans ~/.claude/skills/jim.md
+# Le pointeur est dans ~/.claude/CLAUDE.md
+# Rien à invoquer — Claude le fait tout seul
+```
 
 ## Rappel automatique au terminal
 
