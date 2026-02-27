@@ -5,54 +5,113 @@ import { getCompletionsThisPeriod, isReviewedToday } from '../core/utils.js';
 import { getDormantTasks } from '../core/scheduler.js';
 import type { Task, Habit } from '../core/types.js';
 
-function priorityColor(priority: string): (text: string) => string {
-  if (priority === 'high') return pc.red;
-  if (priority === 'medium') return pc.yellow;
-  return pc.green;
-}
-
 function priorityOrder(priority: string): number {
   if (priority === 'high') return 0;
   if (priority === 'medium') return 1;
   return 2;
 }
 
-function statusTag(task: Task): string {
-  if (task.status === 'dormant') return pc.yellow(' [DORMANT]');
-  if (task.status === 'dropped') return pc.red(' [DROPPED]');
+function priorityLabel(priority: string): string {
+  if (priority === 'high') return pc.red('● high');
+  if (priority === 'medium') return pc.yellow('● med ');
+  return pc.green('● low ');
+}
+
+function statusLabel(task: Task): string {
+  if (task.done) return pc.dim('✓ done');
+  if (task.status === 'dropped') return pc.red('✗ drop');
+  if (task.status === 'dormant' || !isReviewedToday(task)) return pc.yellow('◌ dorm');
   return '';
 }
 
-function displayTasks(tasks: Task[], category: string, showStatusTags: boolean): void {
-  if (tasks.length === 0) return;
+function pad(str: string, len: number): string {
+  // Strip ANSI codes to measure visible length
+  const visible = str.replace(/\x1b\[[0-9;]*m/g, '');
+  const diff = len - visible.length;
+  return diff > 0 ? str + ' '.repeat(diff) : str;
+}
 
-  console.log(pc.bold(pc.underline(`\n${category.toUpperCase()}`)));
+interface Section {
+  label: string;
+  rows: string[][];
+}
 
-  const sorted = [...tasks].sort((a, b) => priorityOrder(a.priority) - priorityOrder(b.priority));
+function drawUnifiedTable(sections: Section[]): void {
+  const nonEmpty = sections.filter((s) => s.rows.length > 0);
+  if (nonEmpty.length === 0) return;
 
-  for (const task of sorted) {
-    const color = priorityColor(task.priority);
-    const status = task.done ? pc.dim('✓') : '○';
-    const tag = showStatusTags ? statusTag(task) : '';
-    const doneStyle = task.done ? pc.strikethrough : (s: string) => s;
+  // Compute column widths across ALL sections
+  const cols = nonEmpty[0].rows[0].length;
+  const widths: number[] = [];
+  for (let c = 0; c < cols; c++) {
+    widths[c] = 0;
+    for (const section of nonEmpty) {
+      for (const row of section.rows) {
+        if (c < row.length) {
+          const visible = row[c].replace(/\x1b\[[0-9;]*m/g, '').length;
+          if (visible > widths[c]) widths[c] = visible;
+        }
+      }
+    }
+  }
 
-    console.log(
-      `  ${status} ${doneStyle(task.title)} ${color(task.priority)}${tag} ${pc.dim(task.id.slice(0, 8))}`
-    );
+  const separatorLine = widths.map((w) => '─'.repeat(w + 2)).join('┬');
+  const totalWidth = separatorLine.replace(/┬/g, '─').length;
+
+  // Top border
+  console.log(`  ${pc.dim('╭')}${pc.dim('─'.repeat(totalWidth))}${pc.dim('╮')}`);
+
+  for (let i = 0; i < nonEmpty.length; i++) {
+    const section = nonEmpty[i];
+
+    // Section header
+    console.log(`  ${pc.dim('│')} ${pc.bold(pad(section.label, totalWidth - 2))} ${pc.dim('│')}`);
+    console.log(`  ${pc.dim('├')}${pc.dim(separatorLine)}${pc.dim('┤')}`);
+
+    // Rows
+    for (const row of section.rows) {
+      const cells = row.map((cell, c) => pad(cell, widths[c]));
+      console.log(`  ${pc.dim('│')} ${cells.join(` ${pc.dim('│')} `)} ${pc.dim('│')}`);
+    }
+
+    // Section separator or bottom border
+    if (i < nonEmpty.length - 1) {
+      console.log(`  ${pc.dim('├')}${pc.dim('─'.repeat(totalWidth))}${pc.dim('┤')}`);
+    } else {
+      console.log(`  ${pc.dim('╰')}${pc.dim(separatorLine.replace(/┬/g, '┴'))}${pc.dim('╯')}`);
+    }
   }
 }
 
-function displayHabits(habits: Habit[]): void {
-  if (habits.length === 0) return;
+function buildTaskRows(tasks: Task[], showStatusTags: boolean): string[][] {
+  const sorted = [...tasks].sort((a, b) => priorityOrder(a.priority) - priorityOrder(b.priority));
+  return sorted.map((task) => {
+    const icon = task.done ? pc.dim('✓') : '○';
+    const title = task.done ? pc.strikethrough(task.title) : task.title;
+    const row = [
+      `${icon} ${title}`,
+      priorityLabel(task.priority),
+      pc.dim(task.id.slice(0, 8)),
+    ];
+    if (showStatusTags) {
+      const status = statusLabel(task);
+      row.push(status || pc.green('● act '));
+    }
+    return row;
+  });
+}
 
-  console.log(pc.bold(pc.underline('\nHABITS')));
-
-  for (const habit of habits) {
+function buildHabitRows(habits: Habit[]): string[][] {
+  return habits.map((habit) => {
     const done = getCompletionsThisPeriod(habit);
     const total = habit.frequency;
     const progress = done >= total ? pc.green(`${done}/${total}`) : pc.yellow(`${done}/${total}`);
-    console.log(`  ○ ${habit.title} ${progress} this ${habit.period} ${pc.dim(habit.id.slice(0, 8))}`);
-  }
+    return [
+      `○ ${habit.title}`,
+      `${progress} this ${habit.period}`,
+      pc.dim(habit.id.slice(0, 8)),
+    ];
+  });
 }
 
 export function registerListCommand(program: Command): void {
@@ -80,7 +139,6 @@ export function registerListCommand(program: Command): void {
         tasks = data.tasks.filter((t) => t.status === 'dropped');
         showStatusTags = true;
       } else {
-        // Default: only active tasks reviewed today (not done)
         tasks = data.tasks.filter((t) => !t.done && t.status === 'active' && isReviewedToday(t));
       }
 
@@ -101,12 +159,22 @@ export function registerListCommand(program: Command): void {
         return;
       }
 
-      displayTasks(proTasks, 'pro', showStatusTags);
-      displayTasks(persoTasks, 'perso', showStatusTags);
+      console.log('');
+
+      const sections: Section[] = [];
+
+      const proRows = buildTaskRows(proTasks, showStatusTags);
+      if (proRows.length > 0) sections.push({ label: 'PRO', rows: proRows });
+
+      const persoRows = buildTaskRows(persoTasks, showStatusTags);
+      if (persoRows.length > 0) sections.push({ label: 'PERSO', rows: persoRows });
 
       if (!opts.category) {
-        displayHabits(data.habits);
+        const habitRows = buildHabitRows(data.habits);
+        if (habitRows.length > 0) sections.push({ label: 'HABITS', rows: habitRows });
       }
+
+      drawUnifiedTable(sections);
 
       console.log('');
     });
