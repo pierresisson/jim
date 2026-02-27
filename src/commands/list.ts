@@ -24,11 +24,47 @@ function statusLabel(task: Task): string {
   return '';
 }
 
-function pad(str: string, len: number): string {
-  // Strip ANSI codes to measure visible length
-  const visible = str.replace(/\x1b\[[0-9;]*m/g, '');
-  const diff = len - visible.length;
-  return diff > 0 ? str + ' '.repeat(diff) : str;
+function visibleLength(str: string): number {
+  return str.replace(/\x1b\[[0-9;]*m/g, '').length;
+}
+
+function truncateVisible(str: string, maxLen: number): string {
+  const fullLen = visibleLength(str);
+  if (fullLen <= maxLen) return str;
+  if (maxLen <= 1) return '…';
+
+  const ansiRegex = /\x1b\[[0-9;]*m/g;
+  const targetLen = maxLen - 1; // room for …
+  let visible = 0;
+  let result = '';
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = ansiRegex.exec(str)) !== null) {
+    const textBefore = str.slice(lastIndex, match.index);
+    for (const char of textBefore) {
+      if (visible >= targetLen) return result + '…';
+      result += char;
+      visible++;
+    }
+    result += match[0]; // ANSI codes don't count
+    lastIndex = match.index + match[0].length;
+  }
+
+  const remaining = str.slice(lastIndex);
+  for (const char of remaining) {
+    if (visible >= targetLen) return result + '…';
+    result += char;
+    visible++;
+  }
+
+  return result;
+}
+
+function fitCell(str: string, len: number): string {
+  const truncated = truncateVisible(str, len);
+  const diff = len - visibleLength(truncated);
+  return diff > 0 ? truncated + ' '.repeat(diff) : truncated;
 }
 
 interface Section {
@@ -40,7 +76,7 @@ function drawUnifiedTable(sections: Section[]): void {
   const nonEmpty = sections.filter((s) => s.rows.length > 0);
   if (nonEmpty.length === 0) return;
 
-  // Compute column widths across ALL sections
+  // Compute natural column widths across ALL sections
   const cols = nonEmpty[0].rows[0].length;
   const widths: number[] = [];
   for (let c = 0; c < cols; c++) {
@@ -48,11 +84,21 @@ function drawUnifiedTable(sections: Section[]): void {
     for (const section of nonEmpty) {
       for (const row of section.rows) {
         if (c < row.length) {
-          const visible = row[c].replace(/\x1b\[[0-9;]*m/g, '').length;
+          const visible = visibleLength(row[c]);
           if (visible > widths[c]) widths[c] = visible;
         }
       }
     }
+  }
+
+  // Responsive: shrink title column (col 0) to fit terminal width
+  const termWidth = process.stdout.columns || 80;
+  const overhead = 3 + 3 * cols; // borders + padding
+  const fixedColsWidth = widths.slice(1).reduce((a, b) => a + b, 0);
+  const naturalTotal = overhead + widths[0] + fixedColsWidth;
+
+  if (naturalTotal > termWidth) {
+    widths[0] = Math.max(12, termWidth - overhead - fixedColsWidth);
   }
 
   const separatorLine = widths.map((w) => '─'.repeat(w + 2)).join('┬');
@@ -65,12 +111,12 @@ function drawUnifiedTable(sections: Section[]): void {
     const section = nonEmpty[i];
 
     // Section header
-    console.log(`  ${pc.dim('│')} ${pc.bold(pad(section.label, totalWidth - 2))} ${pc.dim('│')}`);
+    console.log(`  ${pc.dim('│')} ${pc.bold(fitCell(section.label, totalWidth - 2))} ${pc.dim('│')}`);
     console.log(`  ${pc.dim('├')}${pc.dim(separatorLine)}${pc.dim('┤')}`);
 
     // Rows
     for (const row of section.rows) {
-      const cells = row.map((cell, c) => pad(cell, widths[c]));
+      const cells = row.map((cell, c) => fitCell(cell, widths[c]));
       console.log(`  ${pc.dim('│')} ${cells.join(` ${pc.dim('│')} `)} ${pc.dim('│')}`);
     }
 
