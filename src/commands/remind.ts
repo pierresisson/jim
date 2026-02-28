@@ -3,6 +3,7 @@ import pc from 'picocolors';
 import { JsonStore } from '../core/store.js';
 import { getCompletionsThisPeriod } from '../core/utils.js';
 import { getActiveTasks, getDormantTasks } from '../core/scheduler.js';
+import { findCategory, getCategoryColorFn } from '../core/categories.js';
 
 export function registerRemindCommand(program: Command): void {
   program
@@ -22,21 +23,40 @@ export function registerRemindCommand(program: Command): void {
 
       const active = getActiveTasks(data);
       const dormant = getDormantTasks(data);
-      const activePro = active.filter((t) => t.category === 'pro').length;
-      const activePerso = active.filter((t) => t.category === 'perso').length;
+
+      // Count active tasks per category dynamically
+      const countsByCategory = new Map<string, number>();
+      for (const task of active) {
+        countsByCategory.set(task.category, (countsByCategory.get(task.category) ?? 0) + 1);
+      }
 
       const habitSummary = data.habits.map((h) => {
         const done = getCompletionsThisPeriod(h);
         return { title: h.title, done, total: h.frequency, period: h.period };
       });
 
-      if (activePro === 0 && activePerso === 0 && data.habits.length === 0 && dormant.length === 0) return;
+      if (countsByCategory.size === 0 && data.habits.length === 0 && dormant.length === 0) return;
 
-      console.log(pc.bold('Jim:') + ` ${activePro} pro, ${activePerso} perso active today`);
+      // Build category counts string in config order
+      const parts: string[] = [];
+      for (const cat of config.categories) {
+        const count = countsByCategory.get(cat.key);
+        if (count != null && count > 0) {
+          parts.push(`${count} ${cat.key}`);
+          countsByCategory.delete(cat.key);
+        }
+      }
+      // Any remaining unknown categories
+      for (const [key, count] of countsByCategory) {
+        if (count > 0) parts.push(`${count} ${key}`);
+      }
+
+      const summary = parts.length > 0 ? parts.join(', ') + ' active today' : 'no active tasks today';
+      console.log(pc.bold('Jim:') + ` ${summary}`);
 
       if (habitSummary.length > 0) {
-        const parts = habitSummary.map((h) => `${h.title} ${h.done}/${h.total}`);
-        console.log(pc.dim(`  Habits: ${parts.join(' | ')}`));
+        const habitParts = habitSummary.map((h) => `${h.title} ${h.done}/${h.total}`);
+        console.log(pc.dim(`  Habits: ${habitParts.join(' | ')}`));
       }
 
       if (dormant.length > 0) {

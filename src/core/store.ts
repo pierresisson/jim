@@ -4,9 +4,10 @@ import os from 'node:os';
 import crypto from 'node:crypto';
 import type { IStore, JimData, JimConfig } from './types.js';
 import { migrateTask } from './utils.js';
+import { DEFAULT_CATEGORIES } from './categories.js';
 
 export const DEFAULT_DATA: JimData = { tasks: [], habits: [] };
-export const DEFAULT_CONFIG: JimConfig = { persoDailyQuota: 2, reminderEnabled: true };
+export const DEFAULT_CONFIG: JimConfig = { categories: [...DEFAULT_CATEGORIES], reminderEnabled: true };
 
 function atomicWrite(filePath: string, content: string): void {
   const tmpPath = filePath + '.' + crypto.randomUUID() + '.tmp';
@@ -60,13 +61,22 @@ export class JsonStore implements IStore {
     this.ensureDir();
     if (!fs.existsSync(this.configFile)) {
       atomicWrite(this.configFile, JSON.stringify(DEFAULT_CONFIG, null, 2));
-      return { ...DEFAULT_CONFIG };
+      return { ...DEFAULT_CONFIG, categories: [...DEFAULT_CONFIG.categories] };
     }
     const raw = safeParse<Record<string, unknown>>(this.configFile, {});
-    // Migrate old personalDailyQuota → persoDailyQuota
-    const quota = (raw.persoDailyQuota ?? raw.personalDailyQuota ?? DEFAULT_CONFIG.persoDailyQuota) as number;
     const enabled = (raw.reminderEnabled ?? DEFAULT_CONFIG.reminderEnabled) as boolean;
-    return { persoDailyQuota: quota, reminderEnabled: enabled };
+
+    // New format: categories array exists
+    if (Array.isArray(raw.categories)) {
+      return { categories: raw.categories as JimConfig['categories'], reminderEnabled: enabled };
+    }
+
+    // Old format: migrate persoDailyQuota / personalDailyQuota into default categories
+    const oldQuota = (raw.persoDailyQuota ?? raw.personalDailyQuota ?? 2) as number;
+    const categories = DEFAULT_CATEGORIES.map((c) =>
+      c.key === 'perso' ? { ...c, dailyQuota: oldQuota } : { ...c }
+    );
+    return { categories, reminderEnabled: enabled };
   }
 
   saveConfig(config: JimConfig): void {

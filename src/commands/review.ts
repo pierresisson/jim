@@ -5,6 +5,7 @@ import { JsonStore } from '../core/store.js';
 import { getDormantTasks } from '../core/scheduler.js';
 import type { Task } from '../core/types.js';
 import { daysSince } from '../core/utils.js';
+import { findCategory, getCategoryColorFn } from '../core/categories.js';
 
 function askQuestion(rl: readline.Interface, prompt: string): Promise<string> {
   return new Promise((resolve) => {
@@ -32,6 +33,7 @@ export function registerReviewCommand(program: Command): void {
     .description('Review dormant tasks — keep, drop, or snooze each one')
     .action(async () => {
       const store = new JsonStore();
+      const config = store.loadConfig();
       const data = store.load();
       const dormant = getDormantTasks(data);
 
@@ -51,9 +53,12 @@ export function registerReviewCommand(program: Command): void {
       for (const task of dormant) {
         const age = daysSince(task.createdAt);
         const priorityColor = task.priority === 'high' ? pc.red : task.priority === 'medium' ? pc.yellow : pc.green;
+        const cat = findCategory(config, task.category);
+        const catColorFn = cat ? getCategoryColorFn(cat.color) : pc.white;
+        const catLabel = cat?.label ?? task.category;
 
         console.log(`  ${pc.bold(task.title)}`);
-        console.log(`  ${task.category} | ${priorityColor(task.priority)} | ${age}d old ${pc.dim(task.id.slice(0, 8))}`);
+        console.log(`  ${catColorFn(catLabel)} | ${priorityColor(task.priority)} | ${age}d old ${pc.dim(task.id.slice(0, 8))}`);
 
         let valid = false;
         while (!valid) {

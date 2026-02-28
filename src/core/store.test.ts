@@ -51,24 +51,64 @@ describe('JsonStore', () => {
   describe('loadConfig()', () => {
     it('creates default config when missing', () => {
       const config = store.loadConfig();
-      expect(config).toEqual(DEFAULT_CONFIG);
+      expect(config.categories).toEqual(DEFAULT_CONFIG.categories);
+      expect(config.reminderEnabled).toBe(true);
       expect(fs.existsSync(path.join(tmpDir, 'config.json'))).toBe(true);
     });
 
     it('returns default config on corrupt JSON', () => {
       fs.writeFileSync(path.join(tmpDir, 'config.json'), 'not json');
       const config = store.loadConfig();
-      expect(config.persoDailyQuota).toBe(2);
+      expect(config.categories).toBeDefined();
+      expect(config.categories.find((c) => c.key === 'perso')?.dailyQuota).toBe(2);
+    });
+
+    it('reads new-format config with categories array', () => {
+      const newConfig = {
+        categories: [
+          { key: 'pro', label: 'PRO', color: 'cyan' },
+          { key: 'health', label: 'Health', color: 'green', dailyQuota: 1 },
+        ],
+        reminderEnabled: false,
+      };
+      fs.writeFileSync(path.join(tmpDir, 'config.json'), JSON.stringify(newConfig));
+      const config = store.loadConfig();
+      expect(config.categories).toHaveLength(2);
+      expect(config.categories[1].key).toBe('health');
+      expect(config.reminderEnabled).toBe(false);
+    });
+
+    it('migrates old-format config with persoDailyQuota', () => {
+      const oldConfig = { persoDailyQuota: 5, reminderEnabled: true };
+      fs.writeFileSync(path.join(tmpDir, 'config.json'), JSON.stringify(oldConfig));
+      const config = store.loadConfig();
+      expect(config.categories).toBeDefined();
+      const perso = config.categories.find((c) => c.key === 'perso');
+      expect(perso?.dailyQuota).toBe(5);
+      expect(config.reminderEnabled).toBe(true);
+    });
+
+    it('migrates old-format config with personalDailyQuota', () => {
+      const oldConfig = { personalDailyQuota: 3, reminderEnabled: false };
+      fs.writeFileSync(path.join(tmpDir, 'config.json'), JSON.stringify(oldConfig));
+      const config = store.loadConfig();
+      const perso = config.categories.find((c) => c.key === 'perso');
+      expect(perso?.dailyQuota).toBe(3);
+      expect(config.reminderEnabled).toBe(false);
     });
   });
 
   describe('saveConfig()', () => {
     it('persists config to disk', () => {
-      store.saveConfig({ persoDailyQuota: 5, reminderEnabled: false });
+      const config = {
+        categories: [{ key: 'pro', label: 'PRO', color: 'cyan' }],
+        reminderEnabled: false,
+      };
+      store.saveConfig(config);
       const raw = fs.readFileSync(path.join(tmpDir, 'config.json'), 'utf-8');
-      const config = JSON.parse(raw);
-      expect(config.persoDailyQuota).toBe(5);
-      expect(config.reminderEnabled).toBe(false);
+      const parsed = JSON.parse(raw);
+      expect(parsed.categories).toHaveLength(1);
+      expect(parsed.reminderEnabled).toBe(false);
     });
   });
 

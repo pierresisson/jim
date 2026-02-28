@@ -1,6 +1,6 @@
 # Jim CLI
 
-Assistant personnel pour gérer tes tâches pro/perso et tes habitudes, directement depuis le terminal.
+Assistant personnel pour gérer tes tâches et habitudes par catégories flexibles, directement depuis le terminal.
 
 **Philosophie** : chaque matin commence vide. Tes tâches ne se reportent pas automatiquement — tu décides consciemment de garder, reporter ou abandonner chaque tâche via `jim review`. Pas de honte, pas de "stale", juste une décision intentionnelle.
 
@@ -48,7 +48,7 @@ jim add "Méditer" --habit --frequency 1 --period day
 ```
 
 Options :
-- `-c, --category <pro|perso>` — Catégorie (défaut: `pro`)
+- `-c, --category <key>` — Catégorie (défaut: la première définie dans la config, ex: `pro`)
 - `-p, --priority <high|medium|low>` — Priorité (défaut: `medium`)
 - `--habit` — Créer une habitude au lieu d'une tâche
 - `--frequency <n>` — Nombre de fois par période (habitudes)
@@ -85,7 +85,7 @@ jim next
 
 L'algorithme prend en compte :
 - La priorité de la tâche
-- Le quota perso quotidien (2 par défaut) — si pas atteint, les tâches perso sont boostées
+- Le quota quotidien par catégorie (si défini) — si pas atteint, les tâches de cette catégorie sont boostées
 - L'urgence des habitudes en fin de période
 
 Seules les tâches actives (revues aujourd'hui) sont suggérées.
@@ -129,12 +129,43 @@ Le fichier `~/.jim/config.json` contient :
 
 ```json
 {
-  "persoDailyQuota": 2,
+  "categories": [
+    { "key": "pro", "label": "PRO", "color": "cyan" },
+    { "key": "perso", "label": "PERSO", "color": "magenta", "dailyQuota": 2 }
+  ],
   "reminderEnabled": true
 }
 ```
 
-- `persoDailyQuota` — Nombre de tâches perso à faire par jour avant que l'algo arrête de les booster
+### Catégories flexibles
+
+Tu peux définir autant de catégories que tu veux. Chaque catégorie a :
+
+- `key` — Identifiant unique (utilisé avec `-c` dans les commandes)
+- `label` — Nom affiché dans les tableaux et rappels
+- `color` — Couleur du label (`red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, `gray`)
+- `dailyQuota` (optionnel) — Nombre de tâches à faire par jour ; si le quota n'est pas atteint, `jim next` booste les tâches de cette catégorie
+
+Exemple avec des catégories personnalisées :
+
+```json
+{
+  "categories": [
+    { "key": "pro", "label": "PRO", "color": "cyan" },
+    { "key": "freelance", "label": "Freelance", "color": "blue" },
+    { "key": "perso", "label": "PERSO", "color": "magenta", "dailyQuota": 2 },
+    { "key": "health", "label": "Health", "color": "green", "dailyQuota": 1 }
+  ],
+  "reminderEnabled": true
+}
+```
+
+L'ordre dans le tableau `categories` détermine l'ordre d'affichage dans `jim list`.
+
+> **Migration** : l'ancien format (`persoDailyQuota: 2`) est automatiquement migré en mémoire au chargement. Pas de manipulation manuelle nécessaire.
+
+### Autres options
+
 - `reminderEnabled` — Active/désactive le rappel terminal
 
 ## Données

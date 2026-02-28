@@ -4,18 +4,19 @@ import { Option } from 'commander';
 import pc from 'picocolors';
 import { JsonStore } from '../core/store.js';
 import type { Task, Habit } from '../core/types.js';
+import { getCategoryKeys } from '../core/categories.js';
 
 export function registerAddCommand(program: Command): void {
   program
     .command('add <title...>')
     .description('Add a task or habit')
-    .addOption(new Option('-c, --category <category>', 'Category: pro or perso').choices(['pro', 'perso']).default('pro'))
+    .option('-c, --category <category>', 'Category (default: first defined in config)', undefined)
     .addOption(new Option('-p, --priority <priority>', 'Priority: high, medium, or low').choices(['high', 'medium', 'low']).default('medium'))
     .option('--habit', 'Create a recurring habit instead of a task')
     .option('--frequency <n>', 'How many times per period (for habits)', '1')
     .addOption(new Option('--period <period>', 'Period: day or week (for habits)').choices(['day', 'week']).default('week'))
     .action((words: string[], opts: {
-      category: 'pro' | 'perso';
+      category?: string;
       priority: 'high' | 'medium' | 'low';
       habit?: boolean;
       frequency: string;
@@ -23,7 +24,17 @@ export function registerAddCommand(program: Command): void {
     }) => {
       const title = words.join(' ');
       const store = new JsonStore();
+      const config = store.loadConfig();
       const data = store.load();
+
+      const validKeys = getCategoryKeys(config);
+      const category = opts.category ?? validKeys[0];
+
+      if (!validKeys.includes(category)) {
+        console.log(pc.red(`Unknown category "${category}". Valid: ${validKeys.join(', ')}`));
+        process.exitCode = 1;
+        return;
+      }
 
       if (opts.habit) {
         const freq = parseInt(opts.frequency, 10);
@@ -48,7 +59,7 @@ export function registerAddCommand(program: Command): void {
         const task: Task = {
           id: crypto.randomUUID(),
           title,
-          category: opts.category,
+          category,
           priority: opts.priority,
           createdAt: now,
           done: false,
@@ -60,7 +71,7 @@ export function registerAddCommand(program: Command): void {
 
         const priorityColor = opts.priority === 'high' ? pc.red : opts.priority === 'medium' ? pc.yellow : pc.green;
         console.log(pc.green(`✓ Task added: "${title}"`));
-        console.log(pc.dim(`  ${opts.category} | ${priorityColor(opts.priority)} | ID: ${task.id}`));
+        console.log(pc.dim(`  ${category} | ${priorityColor(opts.priority)} | ID: ${task.id}`));
       }
     });
 }

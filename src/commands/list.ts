@@ -4,6 +4,7 @@ import { JsonStore } from '../core/store.js';
 import { getCompletionsThisPeriod, isReviewedToday } from '../core/utils.js';
 import { getDormantTasks } from '../core/scheduler.js';
 import type { Task, Habit } from '../core/types.js';
+import { findCategory, getCategoryColorFn } from '../core/categories.js';
 
 function priorityOrder(priority: string): number {
   if (priority === 'high') return 0;
@@ -164,12 +165,13 @@ export function registerListCommand(program: Command): void {
   program
     .command('list')
     .description('List tasks and habits')
-    .option('-c, --category <category>', 'Filter by category: pro or perso')
+    .option('-c, --category <category>', 'Filter by category')
     .option('-a, --all', 'Show all tasks (active, dormant, dropped, done)')
     .option('--dormant', 'Show dormant tasks (not reviewed today)')
     .option('--dropped', 'Show dropped tasks')
     .action((opts: { category?: string; all?: boolean; dormant?: boolean; dropped?: boolean }) => {
       const store = new JsonStore();
+      const config = store.loadConfig();
       const data = store.load();
 
       let tasks: Task[];
@@ -192,10 +194,16 @@ export function registerListCommand(program: Command): void {
         tasks = tasks.filter((t) => t.category === opts.category);
       }
 
-      const proTasks = tasks.filter((t) => t.category === 'pro');
-      const persoTasks = tasks.filter((t) => t.category === 'perso');
+      // Group tasks by category
+      const tasksByCategory = new Map<string, Task[]>();
+      for (const task of tasks) {
+        const existing = tasksByCategory.get(task.category) ?? [];
+        existing.push(task);
+        tasksByCategory.set(task.category, existing);
+      }
 
-      if (proTasks.length === 0 && persoTasks.length === 0 && data.habits.length === 0) {
+      const totalTasks = tasks.length;
+      if (totalTasks === 0 && data.habits.length === 0) {
         const dormant = getDormantTasks(data);
         if (dormant.length > 0) {
           console.log(pc.dim(`No active tasks today. ${dormant.length} dormant — run \`jim review\` to decide.`));
@@ -209,11 +217,22 @@ export function registerListCommand(program: Command): void {
 
       const sections: Section[] = [];
 
-      const proRows = buildTaskRows(proTasks, showStatusTags);
-      if (proRows.length > 0) sections.push({ label: 'PRO', rows: proRows });
+      // Build sections in config order
+      for (const cat of config.categories) {
+        const catTasks = tasksByCategory.get(cat.key);
+        if (catTasks && catTasks.length > 0) {
+          const colorFn = getCategoryColorFn(cat.color);
+          const rows = buildTaskRows(catTasks, showStatusTags);
+          sections.push({ label: colorFn(cat.label), rows });
+          tasksByCategory.delete(cat.key);
+        }
+      }
 
-      const persoRows = buildTaskRows(persoTasks, showStatusTags);
-      if (persoRows.length > 0) sections.push({ label: 'PERSO', rows: persoRows });
+      // Any remaining categories not in config (unknown categories)
+      for (const [key, catTasks] of tasksByCategory) {
+        const rows = buildTaskRows(catTasks, showStatusTags);
+        sections.push({ label: key.toUpperCase(), rows });
+      }
 
       if (!opts.category) {
         const habitRows = buildHabitRows(data.habits);

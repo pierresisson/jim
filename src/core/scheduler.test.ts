@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { getNextTask, getActiveTasks, getDormantTasks } from './scheduler.js';
 import type { JimData, JimConfig, Task, Habit } from './types.js';
+import { DEFAULT_CATEGORIES } from './categories.js';
 
-const defaultConfig: JimConfig = { persoDailyQuota: 2, reminderEnabled: true };
+const defaultConfig: JimConfig = { categories: [...DEFAULT_CATEGORIES], reminderEnabled: true };
 
 function makeTask(overrides: Partial<Task> = {}): Task {
   return {
@@ -51,7 +52,8 @@ describe('getNextTask', () => {
       ],
       habits: [],
     };
-    const config: JimConfig = { persoDailyQuota: 0, reminderEnabled: true };
+    // No quota categories → no boost interference
+    const config: JimConfig = { categories: [{ key: 'pro', label: 'PRO', color: 'cyan' }], reminderEnabled: true };
     const result = getNextTask(data, config);
     expect(result?.item.id).toBe('high');
   });
@@ -67,6 +69,26 @@ describe('getNextTask', () => {
     const result = getNextTask(data, defaultConfig);
     // perso-low gets low(2) + quota boost(15) = 17, pro-high gets 10
     expect(result?.item.id).toBe('perso-low');
+  });
+
+  it('boosts custom category tasks when their quota is not met', () => {
+    const config: JimConfig = {
+      categories: [
+        { key: 'pro', label: 'PRO', color: 'cyan' },
+        { key: 'health', label: 'Health', color: 'green', dailyQuota: 1 },
+      ],
+      reminderEnabled: true,
+    };
+    const data: JimData = {
+      tasks: [
+        makeTask({ id: 'pro-high', priority: 'high', category: 'pro' }),
+        makeTask({ id: 'health-low', priority: 'low', category: 'health' }),
+      ],
+      habits: [],
+    };
+    const result = getNextTask(data, config);
+    // health-low gets low(2) + quota boost(15) = 17, pro-high gets 10
+    expect(result?.item.id).toBe('health-low');
   });
 
   it('ignores dormant tasks (not reviewed today)', () => {
@@ -118,6 +140,16 @@ describe('getNextTask', () => {
     };
     const result = getNextTask(data, defaultConfig);
     expect(result?.reason).toBeTruthy();
+  });
+
+  it('uses English reason strings for quota boost', () => {
+    const data: JimData = {
+      tasks: [makeTask({ category: 'perso' })],
+      habits: [],
+    };
+    const result = getNextTask(data, defaultConfig);
+    expect(result?.reason).toContain('PERSO');
+    expect(result?.reason).toContain('quota');
   });
 });
 

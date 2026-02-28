@@ -1,18 +1,12 @@
 import type { Task, Habit, JimData, JimConfig } from './types.js';
 import { getCompletionsThisPeriod, isReviewedToday } from './utils.js';
+import { getQuotaStatus, findCategory } from './categories.js';
 
 export interface Suggestion {
   item: Task | Habit;
   type: 'task' | 'habit';
   score: number;
   reason: string;
-}
-
-function persoTasksDoneToday(data: JimData): number {
-  const today = new Date().toDateString();
-  return data.tasks.filter(
-    (t) => t.category === 'perso' && t.done && t.completedAt && new Date(t.completedAt).toDateString() === today
-  ).length;
 }
 
 function getDaysLeftInPeriod(period: 'day' | 'week'): number {
@@ -36,8 +30,8 @@ export function getDormantTasks(data: JimData): Task[] {
 
 export function getNextTask(data: JimData, config: JimConfig): Suggestion | null {
   const suggestions: Suggestion[] = [];
-  const persoDoneToday = persoTasksDoneToday(data);
-  const quotaNotMet = persoDoneToday < config.persoDailyQuota;
+  const quotaStatus = getQuotaStatus(data, config);
+  const anyQuotaUnmet = [...quotaStatus.values()].some((q) => q.unmet);
 
   const activeTasks = getActiveTasks(data);
 
@@ -45,11 +39,15 @@ export function getNextTask(data: JimData, config: JimConfig): Suggestion | null
     let score = PRIORITY_SCORE[task.priority] ?? 5;
     let reason = `Priority: ${task.priority}`;
 
-    if (task.category === 'perso' && quotaNotMet) {
+    const catQuota = quotaStatus.get(task.category);
+    if (catQuota && catQuota.unmet) {
+      const cat = findCategory(config, task.category);
+      const label = cat?.label ?? task.category;
       score += 15;
-      reason = `Pas encore de tâche perso aujourd'hui (0/${config.persoDailyQuota} quota)`;
-      if (persoDoneToday > 0) {
-        reason = `Quota perso pas atteint (${persoDoneToday}/${config.persoDailyQuota})`;
+      if (catQuota.done === 0) {
+        reason = `No ${label} tasks done today (0/${catQuota.quota} quota)`;
+      } else {
+        reason = `${label} quota not met (${catQuota.done}/${catQuota.quota})`;
       }
     }
 
@@ -70,7 +68,7 @@ export function getNextTask(data: JimData, config: JimConfig): Suggestion | null
       reason = `Urgent: ${remaining} left with only ${daysLeft} days remaining`;
     }
 
-    if (quotaNotMet) {
+    if (anyQuotaUnmet) {
       score += 10;
     }
 

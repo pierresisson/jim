@@ -3,14 +3,7 @@ import pc from 'picocolors';
 import { JsonStore } from '../core/store.js';
 import { getNextTask } from '../core/scheduler.js';
 import type { Task } from '../core/types.js';
-
-function persoTasksDoneToday(store: JsonStore): number {
-  const data = store.load();
-  const today = new Date().toDateString();
-  return data.tasks.filter(
-    (t) => t.category === 'perso' && t.done && t.completedAt && new Date(t.completedAt).toDateString() === today
-  ).length;
-}
+import { getQuotaStatus, findCategory, getCategoryColorFn } from '../core/categories.js';
 
 export function registerNextCommand(program: Command): void {
   program
@@ -28,22 +21,31 @@ export function registerNextCommand(program: Command): void {
         return;
       }
 
-      const doneToday = persoTasksDoneToday(store);
+      const quotaStatus = getQuotaStatus(data, config);
 
       console.log(pc.bold('\n  Next up:'));
 
       if (suggestion.type === 'task') {
         const task = suggestion.item as Task;
         const priorityColor = task.priority === 'high' ? pc.red : task.priority === 'medium' ? pc.yellow : pc.green;
+        const cat = findCategory(config, task.category);
+        const colorFn = cat ? getCategoryColorFn(cat.color) : pc.white;
         console.log(`  ${pc.bold(task.title)}`);
-        console.log(`  ${task.category} | ${priorityColor(task.priority)}`);
+        console.log(`  ${colorFn(cat?.label ?? task.category)} | ${priorityColor(task.priority)}`);
       } else {
         console.log(`  ${pc.bold(suggestion.item.title)}`);
         console.log(`  ${pc.cyan('habit')}`);
       }
 
       console.log(`  ${pc.dim(suggestion.reason)}`);
-      console.log(`  ${pc.dim(`Perso today: ${doneToday}/${config.persoDailyQuota}`)}`);
+
+      // Show quota status for all categories that have a dailyQuota
+      for (const [key, info] of quotaStatus) {
+        const cat = findCategory(config, key);
+        const label = cat?.label ?? key;
+        console.log(`  ${pc.dim(`${label} today: ${info.done}/${info.quota}`)}`);
+      }
+
       console.log(`  ${pc.dim(`ID: ${suggestion.item.id}`)}\n`);
     });
 }
