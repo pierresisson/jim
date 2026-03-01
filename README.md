@@ -1,6 +1,6 @@
 # Jim CLI
 
-Assistant personnel pour gérer tes tâches et habitudes par catégories flexibles, directement depuis le terminal.
+> Bullet Journal pour le terminal. Tâches, habitudes, listes — tout en local, zéro cloud. Chaque matin commence vide : rien ne se reporte sans ta décision. `jim review` te laisse garder, reporter ou dropper. Pas de honte, pas de rappels non sollicités. Tu oublies ? C'est OK. Tu drop ? C'est une feature. Jim respecte ton attention et te fait confiance.
 
 **Philosophie** : chaque matin commence vide. Tes tâches ne se reportent pas automatiquement — tu décides consciemment de garder, reporter ou abandonner chaque tâche via `jim review`. Pas de honte, pas de "stale", juste une décision intentionnelle.
 
@@ -62,6 +62,7 @@ jim tasks -c perso           # Seulement les tâches perso
 jim tasks --all              # Toutes les tâches (actives, dormantes, abandonnées, terminées)
 jim tasks --dormant          # Tâches dormantes (pas encore revues aujourd'hui)
 jim tasks --dropped          # Tâches abandonnées
+jim tasks --done             # Tâches terminées
 ```
 
 Par défaut, seules les tâches actives (revues aujourd'hui) apparaissent. Les anciennes tâches deviennent dormantes et attendent ton `jim review`.
