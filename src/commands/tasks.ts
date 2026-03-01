@@ -169,7 +169,8 @@ export function registerTasksCommand(program: Command): void {
     .option('-a, --all', 'Show all tasks (active, dormant, dropped, done)')
     .option('--dormant', 'Show dormant tasks (not reviewed today)')
     .option('--dropped', 'Show dropped tasks')
-    .action((opts: { category?: string; all?: boolean; dormant?: boolean; dropped?: boolean }) => {
+    .option('--done', 'Show completed tasks')
+    .action((opts: { category?: string; all?: boolean; dormant?: boolean; dropped?: boolean; done?: boolean }) => {
       const store = new JsonStore();
       const config = store.loadConfig();
       const data = store.load();
@@ -185,6 +186,9 @@ export function registerTasksCommand(program: Command): void {
         showStatusTags = true;
       } else if (opts.dropped) {
         tasks = data.tasks.filter((t) => t.status === 'dropped');
+        showStatusTags = true;
+      } else if (opts.done) {
+        tasks = data.tasks.filter((t) => t.done);
         showStatusTags = true;
       } else {
         tasks = data.tasks.filter((t) => !t.done && t.status === 'active' && isReviewedToday(t));
