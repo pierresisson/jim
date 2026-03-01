@@ -1,6 +1,6 @@
 # Jim CLI
 
-> Bullet Journal pour le terminal. Tâches, habitudes, listes — tout en local, zéro cloud. Chaque matin commence vide : rien ne se reporte sans ta décision. `jim review` te laisse garder, reporter ou dropper. Pas de honte, pas de rappels non sollicités. Tu oublies ? C'est OK. Tu drop ? C'est une feature. Jim respecte ton attention et te fait confiance.
+> Ta todo-list te stresse ? Jim, c'est le contraire. Un Bullet Journal dans le terminal — rapide, local, sans compte. Chaque matin commence à zéro. Tes tâches en retard ne hurlent pas : tu choisis quoi garder, quoi lâcher. Dropper une tâche, c'est pas un échec, c'est une décision. Tâches, habitudes, listes de courses ou d'anniversaires — tout tient dans `~/.jim/`.
 
 **Philosophie** : chaque matin commence vide. Tes tâches ne se reportent pas automatiquement — tu décides consciemment de garder, reporter ou abandonner chaque tâche via `jim review`. Pas de honte, pas de "stale", juste une décision intentionnelle.
 
