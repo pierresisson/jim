@@ -91,6 +91,7 @@ Parcourt les tâches dormantes une par une. Pour chaque tâche :
 - **[k]eep** — Remet la tâche active pour aujourd'hui
 - **[d]rop** — Abandonne la tâche (décision consciente, pas une honte)
 - **[s]nooze** — Reporte à une date future
+- **d[o]ne** — Marque la tâche comme terminée
 
 ### `jim next` — Suggestion intelligente
 

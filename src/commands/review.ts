@@ -49,6 +49,7 @@ export function registerReviewCommand(program: Command): void {
       let kept = 0;
       let dropped = 0;
       let snoozed = 0;
+      let completed = 0;
 
       for (const task of dormant) {
         const age = daysSince(task.createdAt);
@@ -62,7 +63,7 @@ export function registerReviewCommand(program: Command): void {
 
         let valid = false;
         while (!valid) {
-          const answer = await askQuestion(rl, pc.cyan('  [k]eep  [d]rop  [s]nooze → '));
+          const answer = await askQuestion(rl, pc.cyan('  [k]eep  [d]rop  [s]nooze  d[o]ne → '));
 
           // Find the actual task in data.tasks (not the filtered copy)
           const realTask = data.tasks.find((t) => t.id === task.id) as Task;
@@ -79,6 +80,14 @@ export function registerReviewCommand(program: Command): void {
             dropped++;
             console.log(pc.dim('  → Dropped\n'));
             valid = true;
+          } else if (answer === 'o' || answer === 'done') {
+            realTask.done = true;
+            realTask.completedAt = new Date().toISOString();
+            realTask.status = 'active';
+            realTask.lastReviewedAt = new Date().toISOString();
+            completed++;
+            console.log(pc.green('  → Done ✓\n'));
+            valid = true;
           } else if (answer === 's' || answer === 'snooze') {
             const dateStr = await askDate(rl);
             if (dateStr) {
@@ -94,7 +103,7 @@ export function registerReviewCommand(program: Command): void {
             }
             valid = true;
           } else {
-            console.log(pc.dim('  Please press k, d, or s'));
+            console.log(pc.dim('  Please press k, d, s, or o'));
           }
         }
       }
@@ -102,6 +111,11 @@ export function registerReviewCommand(program: Command): void {
       rl.close();
       store.save(data);
 
-      console.log(pc.bold('Review complete:') + ` ${kept} kept, ${dropped} dropped, ${snoozed} snoozed`);
+      const parts = [];
+      if (kept) parts.push(`${kept} kept`);
+      if (dropped) parts.push(`${dropped} dropped`);
+      if (snoozed) parts.push(`${snoozed} snoozed`);
+      if (completed) parts.push(`${completed} done`);
+      console.log(pc.bold('Review complete:') + ` ${parts.join(', ')}`);
     });
 }
