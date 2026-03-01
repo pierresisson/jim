@@ -1,23 +1,23 @@
 # Jim CLI
 
-> Ta todo-list te stresse ? Jim, c'est le contraire. Un Bullet Journal dans le terminal — rapide, local, sans compte. Chaque matin commence à zéro. Tes tâches en retard ne hurlent pas : tu choisis quoi garder, quoi lâcher. Dropper une tâche, c'est pas un échec, c'est une décision. Tâches, habitudes, listes de courses ou d'anniversaires — tout tient dans `~/.jim/`.
+> Your todo list shouldn't stress you out. Jim is a Bullet Journal for the terminal — fast, local, no account needed. Each morning starts clean. Overdue tasks don't scream at you: you decide what to keep and what to let go. Dropping a task isn't failure, it's a decision. Tasks, habits, grocery lists, birthdays — everything lives in `~/.jim/`.
 
-**Philosophie** : chaque matin commence vide. Tes tâches ne se reportent pas automatiquement — tu décides consciemment de garder, reporter ou abandonner chaque tâche via `jim review`. Pas de honte, pas de "stale", juste une décision intentionnelle.
+**Philosophy**: each morning starts empty. Tasks don't carry over automatically — you consciously decide to keep, snooze, or drop each one via `jim review`. No shame, no "stale", just intentional choices.
 
-## Intégration Claude Code
+## Claude Code Integration
 
-Jim s'intègre avec Claude Code via un skill global. Claude détecte automatiquement quand tu parles de tâches et utilise `jim` en arrière-plan.
+Jim integrates with Claude Code via a global skill. Claude automatically detects when you talk about tasks and uses `jim` behind the scenes.
 
 ```bash
-# Le skill est installé dans ~/.claude/skills/jim.md
-# Le pointeur est dans ~/.claude/CLAUDE.md
-# Rien à invoquer — Claude le fait tout seul
+# The skill lives in ~/.claude/skills/jim.md
+# The pointer is in ~/.claude/CLAUDE.md
+# Nothing to invoke — Claude does it on its own
 ```
 
 ## Installation
 
 ```bash
-# Cloner et installer
+# Clone and install
 git clone git@github.com:pierresisson/Jim.git
 cd Jim
 bun install
@@ -27,122 +27,122 @@ bun link
 
 Requires [Bun](https://bun.sh) >= 1.0.
 
-## Commandes
+## Commands
 
-### `jim add <title>` — Ajouter une tâche ou habitude
+### `jim add <title>` — Add a task or habit
 
-Les guillemets sont optionnels — `jim add faire les courses` marche aussi bien que `jim add "faire les courses"`.
+Quotes are optional — `jim add buy groceries` works just as well as `jim add "buy groceries"`.
 
 ```bash
-# Tâche pro (défaut)
+# Work task (default)
 jim add Review PR #42
 jim add Review PR #42 -c pro -p high
 
-# Tâche perso
-jim add Configurer filtre Brita -c perso
-jim add Appeler le plombier -c perso -p high
+# Personal task
+jim add Set up Brita filter -c perso
+jim add Call the plumber -c perso -p high
 
-# Habitude récurrente
-jim add "Promener le chien" --habit --frequency 4 --period week
-jim add "Méditer" --habit --frequency 1 --period day
+# Recurring habit
+jim add "Walk the dog" --habit --frequency 4 --period week
+jim add "Meditate" --habit --frequency 1 --period day
 ```
 
-Options :
-- `-c, --category <key>` — Catégorie (défaut: la première définie dans la config, ex: `pro`)
-- `-p, --priority <high|medium|low>` — Priorité (défaut: `medium`)
-- `--habit` — Créer une habitude au lieu d'une tâche
-- `--frequency <n>` — Nombre de fois par période (habitudes)
-- `--period <day|week>` — Période de l'habitude (défaut: `week`)
+Options:
+- `-c, --category <key>` — Category (default: first one defined in config, e.g. `pro`)
+- `-p, --priority <high|medium|low>` — Priority (default: `medium`)
+- `--habit` — Create a habit instead of a task
+- `--frequency <n>` — Times per period (habits)
+- `--period <day|week>` — Habit period (default: `week`)
 
-### `jim tasks` — Voir les tâches et habitudes
+### `jim tasks` — View tasks and habits
 
 ```bash
-jim tasks                    # Tâches actives aujourd'hui + habitudes
-jim tasks -c perso           # Seulement les tâches perso
-jim tasks --all              # Toutes les tâches (actives, dormantes, abandonnées, terminées)
-jim tasks --dormant          # Tâches dormantes (pas encore revues aujourd'hui)
-jim tasks --dropped          # Tâches abandonnées
-jim tasks --done             # Tâches terminées
+jim tasks                    # Today's active tasks + habits
+jim tasks -c perso           # Only personal tasks
+jim tasks --all              # All tasks (active, dormant, dropped, done)
+jim tasks --dormant          # Dormant tasks (not reviewed today)
+jim tasks --dropped          # Dropped tasks
+jim tasks --done             # Completed tasks
 ```
 
-Par défaut, seules les tâches actives (revues aujourd'hui) apparaissent. Les anciennes tâches deviennent dormantes et attendent ton `jim review`.
+By default, only active tasks (reviewed today) are shown. Older tasks become dormant and wait for your `jim review`.
 
-### `jim list` — Gérer des listes
+### `jim list` — Manage lists
 
-Listes persistantes pour tout ce qui n'est pas une tâche : anniversaires, courses, idées…
+Persistent lists for anything that isn't a task: birthdays, groceries, ideas...
 
 ```bash
-jim list                             # Affiche toutes les listes
-jim list create <name>               # Crée une liste vide
-jim list show <name>                 # Affiche les items d'une liste
-jim list add <name> <text...> [-d]   # Ajoute un item (--date optionnel)
-jim list done <name> <id>            # Coche un item
-jim list rm <name> [id]              # Supprime un item, ou la liste entière si pas d'id
+jim list                             # Show all lists
+jim list create <name>               # Create an empty list
+jim list show <name>                 # Show items in a list
+jim list add <name> <text...> [-d]   # Add an item (--date optional)
+jim list done <name> <id>            # Check off an item
+jim list rm <name> [id]              # Remove an item, or the entire list if no id
 ```
 
-Le lookup par nom est case-insensitive et supporte les préfixes partiels (`anniv` → `Anniversaires`).
+Name lookup is case-insensitive and supports partial prefixes (`birth` → `Birthdays`).
 
-### `jim review` — Revoir les tâches dormantes
+### `jim review` — Review dormant tasks
 
 ```bash
 jim review
 ```
 
-Parcourt les tâches dormantes une par une. Pour chaque tâche :
-- **[k]eep** — Remet la tâche active pour aujourd'hui
-- **[d]rop** — Abandonne la tâche (décision consciente, pas une honte)
-- **[s]nooze** — Reporte à une date future
-- **d[o]ne** — Marque la tâche comme terminée
+Walks through dormant tasks one by one. For each task:
+- **[k]eep** — Reactivate the task for today
+- **[d]rop** — Drop the task (a conscious choice, not a failure)
+- **[s]nooze** — Snooze until a future date
+- **d[o]ne** — Mark the task as completed
 
-### `jim next` — Suggestion intelligente
+### `jim next` — Smart suggestion
 
 ```bash
 jim next
 ```
 
-L'algorithme prend en compte :
-- La priorité de la tâche
-- Le quota quotidien par catégorie (si défini) — si pas atteint, les tâches de cette catégorie sont boostées
-- L'urgence des habitudes en fin de période
+The algorithm takes into account:
+- Task priority
+- Daily quota per category (if set) — if not met, tasks from that category get boosted
+- Habit urgency near end of period
 
-Seules les tâches actives (revues aujourd'hui) sont suggérées.
+Only active tasks (reviewed today) are suggested.
 
-### `jim done <id>` — Marquer comme fait
-
-```bash
-jim done 222d8738           # Par ID (préfixe partiel accepté)
-jim done --last             # Complète la dernière suggestion de `jim next`
-```
-
-### `jim delete <id>` — Supprimer définitivement
+### `jim done <id>` — Mark as done
 
 ```bash
-jim delete 222d8738         # Par ID (préfixe partiel accepté)
+jim done 222d8738           # By ID (partial prefix accepted)
+jim done --last             # Complete the task suggested by `jim next`
 ```
 
-Supprime définitivement une tâche ou une habitude du fichier de données.
+### `jim delete <id>` — Permanently delete
 
-### `jim remind` — Rappel rapide
+```bash
+jim delete 222d8738         # By ID (partial prefix accepted)
+```
+
+Permanently removes a task or habit from the data file.
+
+### `jim remind` — Quick reminder
 
 ```bash
 jim remind
 ```
 
-Affiche un résumé concis : tâches actives par catégorie, progression des habitudes. Si des tâches dormantes existent, te suggère de lancer `jim review`.
+Shows a concise summary: active tasks by category, habit progress. If dormant tasks exist, suggests running `jim review`.
 
-## Rappel automatique au terminal
+## Automatic terminal reminder
 
-Ajoute cette ligne à ton `~/.zshrc` (ou `~/.bashrc`) :
+Add this line to your `~/.zshrc` (or `~/.bashrc`):
 
 ```bash
-source /chemin/vers/Jim/.jim-hook.sh
+source /path/to/Jim/.jim-hook.sh
 ```
 
-A chaque ouverture de terminal, `jim remind` s'exécutera automatiquement.
+Every time you open a terminal, `jim remind` will run automatically.
 
 ## Configuration
 
-Le fichier `~/.jim/config.json` contient :
+The `~/.jim/config.json` file contains:
 
 ```json
 {
@@ -154,16 +154,16 @@ Le fichier `~/.jim/config.json` contient :
 }
 ```
 
-### Catégories flexibles
+### Flexible categories
 
-Tu peux définir autant de catégories que tu veux. Chaque catégorie a :
+You can define as many categories as you want. Each category has:
 
-- `key` — Identifiant unique (utilisé avec `-c` dans les commandes)
-- `label` — Nom affiché dans les tableaux et rappels
-- `color` — Couleur du label (`red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, `gray`)
-- `dailyQuota` (optionnel) — Nombre de tâches à faire par jour ; si le quota n'est pas atteint, `jim next` booste les tâches de cette catégorie
+- `key` — Unique identifier (used with `-c` in commands)
+- `label` — Display name in tables and reminders
+- `color` — Label color (`red`, `green`, `yellow`, `blue`, `magenta`, `cyan`, `white`, `gray`)
+- `dailyQuota` (optional) — Number of tasks to do per day; if not met, `jim next` boosts tasks from that category
 
-Exemple avec des catégories personnalisées :
+Example with custom categories:
 
 ```json
 {
@@ -177,23 +177,23 @@ Exemple avec des catégories personnalisées :
 }
 ```
 
-L'ordre dans le tableau `categories` détermine l'ordre d'affichage dans `jim tasks`.
+The order in the `categories` array determines the display order in `jim tasks`.
 
-> **Migration** : l'ancien format (`persoDailyQuota: 2`) est automatiquement migré en mémoire au chargement. Pas de manipulation manuelle nécessaire.
+> **Migration**: the old format (`persoDailyQuota: 2`) is automatically migrated in memory on load. No manual changes needed.
 
-### Autres options
+### Other options
 
-- `reminderEnabled` — Active/désactive le rappel terminal
+- `reminderEnabled` — Enable/disable the terminal reminder
 
-## Données
+## Data
 
-Stockées dans `~/.jim/data.json`. Le répertoire et les fichiers sont créés automatiquement au premier lancement. Les anciens fichiers sans les champs `status`/`lastReviewedAt` sont migrés automatiquement au chargement.
+Stored in `~/.jim/data.json`. The directory and files are created automatically on first run. Old data files without `status`/`lastReviewedAt` fields are auto-migrated on load.
 
 ## Dev
 
 ```bash
-bun run build       # Compiler TypeScript
-bun run dev         # Compiler en mode watch
-bun test            # Lancer les tests
-bun run test:watch  # Tests en mode watch
+bun run build       # Compile TypeScript
+bun run dev         # Compile in watch mode
+bun test            # Run tests
+bun run test:watch  # Tests in watch mode
 ```
