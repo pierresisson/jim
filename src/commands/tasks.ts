@@ -177,6 +177,7 @@ export function registerTasksCommand(program: Command): void {
 
       let tasks: Task[];
       let showStatusTags = false;
+      let doneToday: Task[] = [];
 
       if (opts.all) {
         tasks = data.tasks;
@@ -192,6 +193,10 @@ export function registerTasksCommand(program: Command): void {
         showStatusTags = true;
       } else {
         tasks = data.tasks.filter((t) => !t.done && t.status === 'active' && isReviewedToday(t));
+        const today = new Date().toDateString();
+        doneToday = data.tasks.filter(
+          (t) => t.done && t.completedAt && new Date(t.completedAt).toDateString() === today
+        );
       }
 
       if (opts.category) {
@@ -248,6 +253,11 @@ export function registerTasksCommand(program: Command): void {
       if (!opts.category) {
         const habitRows = buildHabitRows(data.habits);
         if (habitRows.length > 0) sections.push({ label: 'HABITS', rows: habitRows });
+      }
+
+      if (doneToday.length > 0) {
+        const rows = buildTaskRows(doneToday, false);
+        sections.push({ label: pc.green('DONE TODAY'), rows });
       }
 
       drawUnifiedTable(sections);
