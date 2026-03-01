@@ -22,9 +22,26 @@ export interface Habit {
   completions: string[];
 }
 
+export interface ListItem {
+  id: string;
+  text: string;
+  done: boolean;
+  date?: string;
+  createdAt: string;
+  completedAt?: string;
+}
+
+export interface List {
+  id: string;
+  name: string;
+  createdAt: string;
+  items: ListItem[];
+}
+
 export interface JimData {
   tasks: Task[];
   habits: Habit[];
+  lists: List[];
 }
 
 export interface CategoryDef {

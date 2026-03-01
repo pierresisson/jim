@@ -1,246 +1,178 @@
 import type { Command } from 'commander';
 import pc from 'picocolors';
+import crypto from 'node:crypto';
 import { JsonStore } from '../core/store.js';
-import { getCompletionsThisPeriod, isReviewedToday } from '../core/utils.js';
-import { getDormantTasks } from '../core/scheduler.js';
-import type { Task, Habit } from '../core/types.js';
-import { findCategory, getCategoryColorFn } from '../core/categories.js';
+import type { List, ListItem } from '../core/types.js';
 
-function priorityOrder(priority: string): number {
-  if (priority === 'high') return 0;
-  if (priority === 'medium') return 1;
-  return 2;
-}
-
-function priorityLabel(priority: string): string {
-  if (priority === 'high') return pc.red('● high');
-  if (priority === 'medium') return pc.yellow('● med ');
-  return pc.green('● low ');
-}
-
-function statusLabel(task: Task): string {
-  if (task.done) return pc.dim('✓ done');
-  if (task.status === 'dropped') return pc.red('✗ drop');
-  if (task.status === 'dormant' || !isReviewedToday(task)) return pc.yellow('◌ dorm');
-  return '';
-}
-
-function visibleLength(str: string): number {
-  return str.replace(/\x1b\[[0-9;]*m/g, '').length;
-}
-
-function truncateVisible(str: string, maxLen: number): string {
-  const fullLen = visibleLength(str);
-  if (fullLen <= maxLen) return str;
-  if (maxLen <= 1) return '…';
-
-  const ansiRegex = /\x1b\[[0-9;]*m/g;
-  const targetLen = maxLen - 1; // room for …
-  let visible = 0;
-  let result = '';
-  let lastIndex = 0;
-  let match: RegExpExecArray | null;
-
-  while ((match = ansiRegex.exec(str)) !== null) {
-    const textBefore = str.slice(lastIndex, match.index);
-    for (const char of textBefore) {
-      if (visible >= targetLen) return result + '…';
-      result += char;
-      visible++;
-    }
-    result += match[0]; // ANSI codes don't count
-    lastIndex = match.index + match[0].length;
-  }
-
-  const remaining = str.slice(lastIndex);
-  for (const char of remaining) {
-    if (visible >= targetLen) return result + '…';
-    result += char;
-    visible++;
-  }
-
-  return result;
-}
-
-function fitCell(str: string, len: number): string {
-  const truncated = truncateVisible(str, len);
-  const diff = len - visibleLength(truncated);
-  return diff > 0 ? truncated + ' '.repeat(diff) : truncated;
-}
-
-interface Section {
-  label: string;
-  rows: string[][];
-}
-
-function drawUnifiedTable(sections: Section[]): void {
-  const nonEmpty = sections.filter((s) => s.rows.length > 0);
-  if (nonEmpty.length === 0) return;
-
-  // Compute natural column widths across ALL sections
-  const cols = nonEmpty[0].rows[0].length;
-  const widths: number[] = [];
-  for (let c = 0; c < cols; c++) {
-    widths[c] = 0;
-    for (const section of nonEmpty) {
-      for (const row of section.rows) {
-        if (c < row.length) {
-          const visible = visibleLength(row[c]);
-          if (visible > widths[c]) widths[c] = visible;
-        }
-      }
-    }
-  }
-
-  // Responsive: shrink title column (col 0) to fit terminal width
-  const termWidth = process.stdout.columns || 80;
-  const overhead = 3 + 3 * cols; // borders + padding
-  const fixedColsWidth = widths.slice(1).reduce((a, b) => a + b, 0);
-  const naturalTotal = overhead + widths[0] + fixedColsWidth;
-
-  if (naturalTotal > termWidth) {
-    widths[0] = Math.max(12, termWidth - overhead - fixedColsWidth);
-  }
-
-  const separatorLine = widths.map((w) => '─'.repeat(w + 2)).join('┬');
-  const totalWidth = separatorLine.replace(/┬/g, '─').length;
-
-  // Top border
-  console.log(`  ${pc.dim('╭')}${pc.dim('─'.repeat(totalWidth))}${pc.dim('╮')}`);
-
-  for (let i = 0; i < nonEmpty.length; i++) {
-    const section = nonEmpty[i];
-
-    // Section header
-    console.log(`  ${pc.dim('│')} ${pc.bold(fitCell(section.label, totalWidth - 2))} ${pc.dim('│')}`);
-    console.log(`  ${pc.dim('├')}${pc.dim(separatorLine)}${pc.dim('┤')}`);
-
-    // Rows
-    for (const row of section.rows) {
-      const cells = row.map((cell, c) => fitCell(cell, widths[c]));
-      console.log(`  ${pc.dim('│')} ${cells.join(` ${pc.dim('│')} `)} ${pc.dim('│')}`);
-    }
-
-    // Section separator or bottom border
-    if (i < nonEmpty.length - 1) {
-      console.log(`  ${pc.dim('├')}${pc.dim('─'.repeat(totalWidth))}${pc.dim('┤')}`);
-    } else {
-      console.log(`  ${pc.dim('╰')}${pc.dim(separatorLine.replace(/┬/g, '┴'))}${pc.dim('╯')}`);
-    }
-  }
-}
-
-function buildTaskRows(tasks: Task[], showStatusTags: boolean): string[][] {
-  const sorted = [...tasks].sort((a, b) => priorityOrder(a.priority) - priorityOrder(b.priority));
-  return sorted.map((task) => {
-    const icon = task.done ? pc.dim('✓') : '○';
-    const title = task.done ? pc.strikethrough(task.title) : task.title;
-    const row = [
-      `${icon} ${title}`,
-      priorityLabel(task.priority),
-      pc.dim(task.id.slice(0, 8)),
-    ];
-    if (showStatusTags) {
-      const status = statusLabel(task);
-      row.push(status || pc.green('● act '));
-    }
-    return row;
-  });
-}
-
-function buildHabitRows(habits: Habit[]): string[][] {
-  return habits.map((habit) => {
-    const done = getCompletionsThisPeriod(habit);
-    const total = habit.frequency;
-    const progress = done >= total ? pc.green(`${done}/${total}`) : pc.yellow(`${done}/${total}`);
-    return [
-      `○ ${habit.title}`,
-      `${progress} this ${habit.period}`,
-      pc.dim(habit.id.slice(0, 8)),
-    ];
-  });
+function findList(lists: List[], name: string): List | undefined {
+  const lower = name.toLowerCase();
+  return lists.find((l) => l.name.toLowerCase() === lower)
+    ?? lists.find((l) => l.name.toLowerCase().startsWith(lower));
 }
 
 export function registerListCommand(program: Command): void {
-  program
+  const list = program
     .command('list')
-    .description('List tasks and habits')
-    .option('-c, --category <category>', 'Filter by category')
-    .option('-a, --all', 'Show all tasks (active, dormant, dropped, done)')
-    .option('--dormant', 'Show dormant tasks (not reviewed today)')
-    .option('--dropped', 'Show dropped tasks')
-    .action((opts: { category?: string; all?: boolean; dormant?: boolean; dropped?: boolean }) => {
+    .description('Manage persistent lists')
+    .action(() => {
       const store = new JsonStore();
-      const config = store.loadConfig();
       const data = store.load();
 
-      let tasks: Task[];
-      let showStatusTags = false;
-
-      if (opts.all) {
-        tasks = data.tasks;
-        showStatusTags = true;
-      } else if (opts.dormant) {
-        tasks = getDormantTasks(data);
-        showStatusTags = true;
-      } else if (opts.dropped) {
-        tasks = data.tasks.filter((t) => t.status === 'dropped');
-        showStatusTags = true;
-      } else {
-        tasks = data.tasks.filter((t) => !t.done && t.status === 'active' && isReviewedToday(t));
-      }
-
-      if (opts.category) {
-        tasks = tasks.filter((t) => t.category === opts.category);
-      }
-
-      // Group tasks by category
-      const tasksByCategory = new Map<string, Task[]>();
-      for (const task of tasks) {
-        const existing = tasksByCategory.get(task.category) ?? [];
-        existing.push(task);
-        tasksByCategory.set(task.category, existing);
-      }
-
-      const totalTasks = tasks.length;
-      if (totalTasks === 0 && data.habits.length === 0) {
-        const dormant = getDormantTasks(data);
-        if (dormant.length > 0) {
-          console.log(pc.dim(`No active tasks today. ${dormant.length} dormant — run \`jim review\` to decide.`));
-        } else {
-          console.log(pc.dim('No tasks or habits yet. Use `jim add` to get started.'));
-        }
+      if (data.lists.length === 0) {
+        console.log(pc.dim('No lists yet. Use `jim list create <name>` to get started.'));
         return;
       }
 
       console.log('');
+      for (const l of data.lists) {
+        const doneCount = l.items.filter((i) => i.done).length;
+        const total = l.items.length;
+        const summary = total === 0
+          ? pc.dim('empty')
+          : `${doneCount}/${total} done`;
+        console.log(`  ${pc.bold(l.name)}  ${summary}`);
+      }
+      console.log('');
+    });
 
-      const sections: Section[] = [];
+  list
+    .command('create <name>')
+    .description('Create a new list')
+    .action((name: string) => {
+      const store = new JsonStore();
+      const data = store.load();
 
-      // Build sections in config order
-      for (const cat of config.categories) {
-        const catTasks = tasksByCategory.get(cat.key);
-        if (catTasks && catTasks.length > 0) {
-          const colorFn = getCategoryColorFn(cat.color);
-          const rows = buildTaskRows(catTasks, showStatusTags);
-          sections.push({ label: colorFn(cat.label), rows });
-          tasksByCategory.delete(cat.key);
-        }
+      if (findList(data.lists, name)) {
+        console.log(pc.red(`List "${name}" already exists.`));
+        process.exitCode = 1;
+        return;
       }
 
-      // Any remaining categories not in config (unknown categories)
-      for (const [key, catTasks] of tasksByCategory) {
-        const rows = buildTaskRows(catTasks, showStatusTags);
-        sections.push({ label: key.toUpperCase(), rows });
-      }
+      const newList: List = {
+        id: crypto.randomUUID(),
+        name,
+        createdAt: new Date().toISOString(),
+        items: [],
+      };
+      data.lists.push(newList);
+      store.save(data);
+      console.log(pc.green(`List "${name}" created.`));
+    });
 
-      if (!opts.category) {
-        const habitRows = buildHabitRows(data.habits);
-        if (habitRows.length > 0) sections.push({ label: 'HABITS', rows: habitRows });
-      }
+  list
+    .command('show <name>')
+    .description('Show items in a list')
+    .action((name: string) => {
+      const store = new JsonStore();
+      const data = store.load();
+      const l = findList(data.lists, name);
 
-      drawUnifiedTable(sections);
+      if (!l) {
+        console.log(pc.red(`List "${name}" not found.`));
+        process.exitCode = 1;
+        return;
+      }
 
       console.log('');
+      console.log(`  ${pc.bold(l.name)}`);
+
+      if (l.items.length === 0) {
+        console.log(pc.dim('  (empty)'));
+      } else {
+        for (const item of l.items) {
+          const check = item.done ? pc.green('✓') : '○';
+          const text = item.done ? pc.strikethrough(item.text) : item.text;
+          const date = item.date ? pc.dim(` (${item.date})`) : '';
+          const id = pc.dim(item.id.slice(0, 8));
+          console.log(`  ${check} ${text}${date}  ${id}`);
+        }
+      }
+      console.log('');
+    });
+
+  list
+    .command('add <name> <text...>')
+    .description('Add an item to a list')
+    .option('-d, --date <date>', 'Date in YYYY-MM-DD format')
+    .action((name: string, textParts: string[], opts: { date?: string }) => {
+      const store = new JsonStore();
+      const data = store.load();
+      const l = findList(data.lists, name);
+
+      if (!l) {
+        console.log(pc.red(`List "${name}" not found.`));
+        process.exitCode = 1;
+        return;
+      }
+
+      const item: ListItem = {
+        id: crypto.randomUUID(),
+        text: textParts.join(' '),
+        done: false,
+        createdAt: new Date().toISOString(),
+      };
+      if (opts.date) item.date = opts.date;
+
+      l.items.push(item);
+      store.save(data);
+      console.log(pc.green(`Added "${item.text}" to ${l.name}.`));
+    });
+
+  list
+    .command('done <name> <id>')
+    .description('Mark an item as done')
+    .action((name: string, id: string) => {
+      const store = new JsonStore();
+      const data = store.load();
+      const l = findList(data.lists, name);
+
+      if (!l) {
+        console.log(pc.red(`List "${name}" not found.`));
+        process.exitCode = 1;
+        return;
+      }
+
+      const item = l.items.find((i) => i.id.startsWith(id));
+      if (!item) {
+        console.log(pc.red(`Item "${id}" not found in ${l.name}.`));
+        process.exitCode = 1;
+        return;
+      }
+
+      item.done = true;
+      item.completedAt = new Date().toISOString();
+      store.save(data);
+      console.log(pc.green(`Marked "${item.text}" as done.`));
+    });
+
+  list
+    .command('rm <name> [id]')
+    .description('Remove an item or an entire list')
+    .action((name: string, id?: string) => {
+      const store = new JsonStore();
+      const data = store.load();
+      const l = findList(data.lists, name);
+
+      if (!l) {
+        console.log(pc.red(`List "${name}" not found.`));
+        process.exitCode = 1;
+        return;
+      }
+
+      if (id) {
+        const idx = l.items.findIndex((i) => i.id.startsWith(id));
+        if (idx === -1) {
+          console.log(pc.red(`Item "${id}" not found in ${l.name}.`));
+          process.exitCode = 1;
+          return;
+        }
+        const removed = l.items.splice(idx, 1)[0];
+        store.save(data);
+        console.log(pc.green(`Removed "${removed.text}" from ${l.name}.`));
+      } else {
+        data.lists = data.lists.filter((x) => x.id !== l.id);
+        store.save(data);
+        console.log(pc.green(`List "${l.name}" deleted.`));
+      }
     });
 }

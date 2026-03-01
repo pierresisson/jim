@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { Command } from 'commander';
 import { registerAddCommand } from './commands/add.js';
+import { registerTasksCommand } from './commands/tasks.js';
 import { registerListCommand } from './commands/list.js';
 import { registerNextCommand } from './commands/next.js';
 import { registerDoneCommand } from './commands/done.js';
@@ -23,6 +24,7 @@ program
   .description('Personal task & habits assistant');
 
 registerAddCommand(program);
+registerTasksCommand(program);
 registerListCommand(program);
 registerNextCommand(program);
 registerDoneCommand(program);

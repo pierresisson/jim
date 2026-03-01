@@ -6,7 +6,7 @@ import type { IStore, JimData, JimConfig } from './types.js';
 import { migrateTask } from './utils.js';
 import { DEFAULT_CATEGORIES } from './categories.js';
 
-export const DEFAULT_DATA: JimData = { tasks: [], habits: [] };
+export const DEFAULT_DATA: JimData = { tasks: [], habits: [], lists: [] };
 export const DEFAULT_CONFIG: JimConfig = { categories: [...DEFAULT_CATEGORIES], reminderEnabled: true };
 
 function atomicWrite(filePath: string, content: string): void {
@@ -45,10 +45,11 @@ export class JsonStore implements IStore {
     this.ensureDir();
     if (!fs.existsSync(this.dataFile)) {
       atomicWrite(this.dataFile, JSON.stringify(DEFAULT_DATA, null, 2));
-      return { tasks: [], habits: [] };
+      return { tasks: [], habits: [], lists: [] };
     }
-    const data = safeParse<JimData>(this.dataFile, { tasks: [], habits: [] });
+    const data = safeParse<JimData>(this.dataFile, { tasks: [], habits: [], lists: [] });
     data.tasks = data.tasks.map(migrateTask);
+    data.lists = data.lists ?? [];
     return data;
   }
 

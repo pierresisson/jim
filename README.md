@@ -54,17 +54,32 @@ Options :
 - `--frequency <n>` — Nombre de fois par période (habitudes)
 - `--period <day|week>` — Période de l'habitude (défaut: `week`)
 
-### `jim list` — Voir les tâches et habitudes
+### `jim tasks` — Voir les tâches et habitudes
 
 ```bash
-jim list                    # Tâches actives aujourd'hui + habitudes
-jim list -c perso        # Seulement les tâches perso
-jim list --all              # Toutes les tâches (actives, dormantes, abandonnées, terminées)
-jim list --dormant          # Tâches dormantes (pas encore revues aujourd'hui)
-jim list --dropped          # Tâches abandonnées
+jim tasks                    # Tâches actives aujourd'hui + habitudes
+jim tasks -c perso           # Seulement les tâches perso
+jim tasks --all              # Toutes les tâches (actives, dormantes, abandonnées, terminées)
+jim tasks --dormant          # Tâches dormantes (pas encore revues aujourd'hui)
+jim tasks --dropped          # Tâches abandonnées
 ```
 
 Par défaut, seules les tâches actives (revues aujourd'hui) apparaissent. Les anciennes tâches deviennent dormantes et attendent ton `jim review`.
+
+### `jim list` — Gérer des listes
+
+Listes persistantes pour tout ce qui n'est pas une tâche : anniversaires, courses, idées…
+
+```bash
+jim list                             # Affiche toutes les listes
+jim list create <name>               # Crée une liste vide
+jim list show <name>                 # Affiche les items d'une liste
+jim list add <name> <text...> [-d]   # Ajoute un item (--date optionnel)
+jim list done <name> <id>            # Coche un item
+jim list rm <name> [id]              # Supprime un item, ou la liste entière si pas d'id
+```
+
+Le lookup par nom est case-insensitive et supporte les préfixes partiels (`anniv` → `Anniversaires`).
 
 ### `jim review` — Revoir les tâches dormantes
 
@@ -160,7 +175,7 @@ Exemple avec des catégories personnalisées :
 }
 ```
 
-L'ordre dans le tableau `categories` détermine l'ordre d'affichage dans `jim list`.
+L'ordre dans le tableau `categories` détermine l'ordre d'affichage dans `jim tasks`.
 
 > **Migration** : l'ancien format (`persoDailyQuota: 2`) est automatiquement migré en mémoire au chargement. Pas de manipulation manuelle nécessaire.
 

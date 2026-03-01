@@ -35,7 +35,14 @@ describe('JsonStore', () => {
     it('returns default data on corrupt JSON', () => {
       fs.writeFileSync(path.join(tmpDir, 'data.json'), '{broken json!!!');
       const data = store.load();
-      expect(data).toEqual({ tasks: [], habits: [] });
+      expect(data).toEqual({ tasks: [], habits: [], lists: [] });
+    });
+
+    it('initializes lists to [] for old data without lists field', () => {
+      const oldData = { tasks: [], habits: [] };
+      fs.writeFileSync(path.join(tmpDir, 'data.json'), JSON.stringify(oldData));
+      const data = store.load();
+      expect(data.lists).toEqual([]);
     });
   });
 
