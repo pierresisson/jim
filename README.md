@@ -150,9 +150,14 @@ The `~/.jim/config.json` file contains:
     { "key": "pro", "label": "PRO", "color": "cyan" },
     { "key": "perso", "label": "PERSO", "color": "magenta", "dailyQuota": 2 }
   ],
-  "reminderEnabled": true
+  "reminderEnabled": true,
+  "dailyGoal": 5
 }
 ```
+
+### Daily goal
+
+Set `dailyGoal` to a number to track how many tasks you want to complete each day. Progress is shown in `jim tasks`, `jim next`, and `jim remind`. Turns green when you hit the target. Optional — if omitted, nothing is displayed.
 
 ### Flexible categories
 

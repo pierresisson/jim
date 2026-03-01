@@ -6,6 +6,7 @@ import {
   getCategoryKeys,
   categoryDoneToday,
   getQuotaStatus,
+  getDailyGoalStatus,
 } from './categories.js';
 import type { JimConfig, JimData, Task } from './types.js';
 
@@ -79,6 +80,7 @@ describe('categoryDoneToday', () => {
         makeTask({ id: '4', category: 'perso', done: false }),
       ],
       habits: [],
+      lists: [],
     };
     expect(categoryDoneToday(data, 'perso')).toBe(2);
     expect(categoryDoneToday(data, 'pro')).toBe(1);
@@ -89,6 +91,7 @@ describe('categoryDoneToday', () => {
     const data: JimData = {
       tasks: [makeTask({ category: 'perso', done: true, completedAt: yesterday })],
       habits: [],
+      lists: [],
     };
     expect(categoryDoneToday(data, 'perso')).toBe(0);
   });
@@ -113,6 +116,7 @@ describe('getQuotaStatus', () => {
         makeTask({ id: '1', category: 'perso', done: true, completedAt: now }),
       ],
       habits: [],
+      lists: [],
     };
     const status = getQuotaStatus(data, defaultConfig);
     expect(status.get('perso')?.done).toBe(1);
@@ -127,6 +131,7 @@ describe('getQuotaStatus', () => {
         makeTask({ id: '2', category: 'perso', done: true, completedAt: now }),
       ],
       habits: [],
+      lists: [],
     };
     const status = getQuotaStatus(data, defaultConfig);
     expect(status.get('perso')?.unmet).toBe(false);
@@ -145,5 +150,40 @@ describe('getQuotaStatus', () => {
     expect(status.size).toBe(1);
     expect(status.has('health')).toBe(true);
     expect(status.has('pro')).toBe(false);
+  });
+});
+
+describe('getDailyGoalStatus', () => {
+  it('returns null when dailyGoal is not set', () => {
+    const data: JimData = { tasks: [], habits: [], lists: [] };
+    expect(getDailyGoalStatus(data, defaultConfig)).toBeNull();
+  });
+
+  it('returns done count and goal when dailyGoal is set', () => {
+    const now = new Date().toISOString();
+    const config: JimConfig = { ...defaultConfig, dailyGoal: 5 };
+    const data: JimData = {
+      tasks: [
+        makeTask({ id: '1', done: true, completedAt: now }),
+        makeTask({ id: '2', done: true, completedAt: now }),
+        makeTask({ id: '3', done: false }),
+      ],
+      habits: [],
+      lists: [],
+    };
+    const status = getDailyGoalStatus(data, config);
+    expect(status).toEqual({ done: 2, goal: 5 });
+  });
+
+  it('ignores tasks completed on other days', () => {
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const config: JimConfig = { ...defaultConfig, dailyGoal: 3 };
+    const data: JimData = {
+      tasks: [makeTask({ done: true, completedAt: yesterday })],
+      habits: [],
+      lists: [],
+    };
+    const status = getDailyGoalStatus(data, config);
+    expect(status).toEqual({ done: 0, goal: 3 });
   });
 });

@@ -3,7 +3,7 @@ import pc from 'picocolors';
 import { JsonStore } from '../core/store.js';
 import { getCompletionsThisPeriod } from '../core/utils.js';
 import { getActiveTasks, getDormantTasks } from '../core/scheduler.js';
-import { findCategory, getCategoryColorFn } from '../core/categories.js';
+import { findCategory, getCategoryColorFn, getDailyGoalStatus } from '../core/categories.js';
 
 export function registerRemindCommand(program: Command): void {
   program
@@ -53,6 +53,12 @@ export function registerRemindCommand(program: Command): void {
 
       const summary = parts.length > 0 ? parts.join(', ') + ' active today' : 'no active tasks today';
       console.log(pc.bold('Jim:') + ` ${summary}`);
+
+      const goalStatus = getDailyGoalStatus(data, config);
+      if (goalStatus) {
+        const goalText = `Goal: ${goalStatus.done}/${goalStatus.goal} done today`;
+        console.log(goalStatus.done >= goalStatus.goal ? pc.green(`  ${goalText}`) : pc.dim(`  ${goalText}`));
+      }
 
       if (habitSummary.length > 0) {
         const habitParts = habitSummary.map((h) => `${h.title} ${h.done}/${h.total}`);

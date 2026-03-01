@@ -66,10 +66,11 @@ export class JsonStore implements IStore {
     }
     const raw = safeParse<Record<string, unknown>>(this.configFile, {});
     const enabled = (raw.reminderEnabled ?? DEFAULT_CONFIG.reminderEnabled) as boolean;
+    const dailyGoal = raw.dailyGoal as number | undefined;
 
     // New format: categories array exists
     if (Array.isArray(raw.categories)) {
-      return { categories: raw.categories as JimConfig['categories'], reminderEnabled: enabled };
+      return { categories: raw.categories as JimConfig['categories'], reminderEnabled: enabled, dailyGoal };
     }
 
     // Old format: migrate persoDailyQuota / personalDailyQuota into default categories
@@ -77,7 +78,7 @@ export class JsonStore implements IStore {
     const categories = DEFAULT_CATEGORIES.map((c) =>
       c.key === 'perso' ? { ...c, dailyQuota: oldQuota } : { ...c }
     );
-    return { categories, reminderEnabled: enabled };
+    return { categories, reminderEnabled: enabled, dailyGoal };
   }
 
   saveConfig(config: JimConfig): void {

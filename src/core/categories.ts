@@ -42,6 +42,23 @@ export interface QuotaInfo {
   unmet: boolean;
 }
 
+export function totalDoneToday(data: JimData): number {
+  const today = new Date().toDateString();
+  return data.tasks.filter(
+    (t) => t.done && t.completedAt && new Date(t.completedAt).toDateString() === today
+  ).length;
+}
+
+export interface DailyGoalInfo {
+  done: number;
+  goal: number;
+}
+
+export function getDailyGoalStatus(data: JimData, config: JimConfig): DailyGoalInfo | null {
+  if (config.dailyGoal == null || config.dailyGoal <= 0) return null;
+  return { done: totalDoneToday(data), goal: config.dailyGoal };
+}
+
 export function getQuotaStatus(data: JimData, config: JimConfig): Map<string, QuotaInfo> {
   const result = new Map<string, QuotaInfo>();
   for (const cat of config.categories) {

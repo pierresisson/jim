@@ -3,7 +3,7 @@ import pc from 'picocolors';
 import { JsonStore } from '../core/store.js';
 import { getNextTask } from '../core/scheduler.js';
 import type { Task } from '../core/types.js';
-import { getQuotaStatus, findCategory, getCategoryColorFn } from '../core/categories.js';
+import { getQuotaStatus, findCategory, getCategoryColorFn, getDailyGoalStatus } from '../core/categories.js';
 
 export function registerNextCommand(program: Command): void {
   program
@@ -44,6 +44,12 @@ export function registerNextCommand(program: Command): void {
         const cat = findCategory(config, key);
         const label = cat?.label ?? key;
         console.log(`  ${pc.dim(`${label} today: ${info.done}/${info.quota}`)}`);
+      }
+
+      const goalStatus = getDailyGoalStatus(data, config);
+      if (goalStatus) {
+        const goalText = `Goal: ${goalStatus.done}/${goalStatus.goal} done today`;
+        console.log(goalStatus.done >= goalStatus.goal ? `  ${pc.green(goalText)}` : `  ${pc.dim(goalText)}`);
       }
 
       console.log(`  ${pc.dim(`ID: ${suggestion.item.id}`)}\n`);

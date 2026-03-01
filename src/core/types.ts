@@ -54,6 +54,7 @@ export interface CategoryDef {
 export interface JimConfig {
   categories: CategoryDef[];
   reminderEnabled: boolean;
+  dailyGoal?: number;
 }
 
 export interface IStore {

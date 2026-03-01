@@ -4,7 +4,7 @@ import { JsonStore } from '../core/store.js';
 import { getCompletionsThisPeriod, isReviewedToday } from '../core/utils.js';
 import { getDormantTasks } from '../core/scheduler.js';
 import type { Task, Habit } from '../core/types.js';
-import { findCategory, getCategoryColorFn } from '../core/categories.js';
+import { findCategory, getCategoryColorFn, getDailyGoalStatus } from '../core/categories.js';
 
 function priorityOrder(priority: string): number {
   if (priority === 'high') return 0;
@@ -218,6 +218,13 @@ export function registerTasksCommand(program: Command): void {
       }
 
       console.log('');
+
+      const goalStatus = getDailyGoalStatus(data, config);
+      if (goalStatus) {
+        const goalText = `Goal: ${goalStatus.done}/${goalStatus.goal} done today`;
+        console.log(goalStatus.done >= goalStatus.goal ? `  ${pc.green(goalText)}` : `  ${pc.dim(goalText)}`);
+        console.log('');
+      }
 
       const sections: Section[] = [];
 
