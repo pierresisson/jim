@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jim - A Bullet Journal for the terminal</title>
+  <meta name="description" content="Fast, local, no account needed. A terminal task manager that starts each morning clean.">
+  <meta property="og:title" content="Jim - A Bullet Journal for the terminal">
+  <meta property="og:description" content="Fast, local, no account needed. A terminal task manager that starts each morning clean.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://jim.pierresisson.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0a;
+      color: #e5e5e5;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* Header */
+    header {
+      padding: 6rem 0 4rem;
+    }
+
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-weight: 400;
+      font-style: italic;
+      font-size: 3.5rem;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+
+    .tagline {
+      margin-top: 1rem;
+      font-size: 1.125rem;
+      color: #a3a3a3;
+    }
+
+    /* Sections */
+    section {
+      padding: 3rem 0;
+    }
+
+    h2 {
+      font-family: 'Playfair Display', serif;
+      font-weight: 400;
+      font-size: 1.5rem;
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.01em;
+    }
+
+    p {
+      color: #a3a3a3;
+      margin-bottom: 1rem;
+    }
+
+    /* Code block */
+    pre {
+      background: #141414;
+      border: 1px solid #262626;
+      border-radius: 6px;
+      padding: 1.25rem 1.5rem;
+      overflow-x: auto;
+      font-size: 0.875rem;
+      line-height: 1.8;
+      margin-bottom: 1rem;
+    }
+
+    code {
+      font-family: 'SF Mono', 'Fira Code', 'Fira Mono', monospace;
+      font-size: 0.875rem;
+    }
+
+    .comment { color: #525252; }
+    .cmd { color: #e5e5e5; }
+
+    /* Commands list */
+    .commands {
+      list-style: none;
+    }
+
+    .commands li {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid #1a1a1a;
+      display: flex;
+      gap: 1.5rem;
+      align-items: baseline;
+    }
+
+    .commands li:last-child {
+      border-bottom: none;
+    }
+
+    .cmd-name {
+      font-family: 'SF Mono', 'Fira Code', 'Fira Mono', monospace;
+      font-size: 0.875rem;
+      color: #e5e5e5;
+      white-space: nowrap;
+      min-width: 7rem;
+    }
+
+    .cmd-desc {
+      color: #a3a3a3;
+      font-size: 0.875rem;
+    }
+
+    /* Philosophy */
+    .philosophy {
+      border-left: 1px solid #333;
+      padding-left: 1.5rem;
+    }
+
+    /* Footer */
+    footer {
+      padding: 4rem 0 6rem;
+      color: #525252;
+      font-size: 0.875rem;
+    }
+
+    footer a {
+      color: #a3a3a3;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+      transition: color 0.15s;
+    }
+
+    footer a:hover {
+      color: #e5e5e5;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      h1 { font-size: 2.5rem; }
+      header { padding: 4rem 0 3rem; }
+      .commands li { flex-direction: column; gap: 0.25rem; }
+      .cmd-name { min-width: auto; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Jim</h1>
+      <p class="tagline">A Bullet Journal for the terminal.</p>
+    </header>
+
+    <section>
+      <p>Your todo list shouldn't stress you out.</p>
+      <p>Jim is fast, local, and needs no account. Each morning starts clean. Overdue tasks don't scream at you — you decide what to keep and what to let go.</p>
+    </section>
+
+    <section>
+      <h2>Install</h2>
+      <pre><code><span class="cmd">git clone https://github.com/pierresisson/jim.git</span>
+<span class="cmd">cd jim</span>
+<span class="cmd">bun install</span>
+<span class="cmd">bun run build</span>
+<span class="cmd">npm install -g .</span></code></pre>
+    </section>
+
+    <section>
+      <h2>Commands</h2>
+      <ul class="commands">
+        <li><span class="cmd-name">jim add</span><span class="cmd-desc">Add a task or habit</span></li>
+        <li><span class="cmd-name">jim tasks</span><span class="cmd-desc">View active tasks</span></li>
+        <li><span class="cmd-name">jim review</span><span class="cmd-desc">Review dormant tasks — keep, drop, snooze, or done</span></li>
+        <li><span class="cmd-name">jim next</span><span class="cmd-desc">Smart suggestion based on priority and quotas</span></li>
+        <li><span class="cmd-name">jim done</span><span class="cmd-desc">Mark a task complete</span></li>
+        <li><span class="cmd-name">jim edit</span><span class="cmd-desc">Edit title, category, or priority</span></li>
+        <li><span class="cmd-name">jim list</span><span class="cmd-desc">Persistent lists — groceries, birthdays, ideas</span></li>
+        <li><span class="cmd-name">jim cat</span><span class="cmd-desc">Manage categories and daily quotas</span></li>
+        <li><span class="cmd-name">jim remind</span><span class="cmd-desc">Quick summary of what's active</span></li>
+        <li><span class="cmd-name">jim delete</span><span class="cmd-desc">Permanently remove a task</span></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Philosophy</h2>
+      <div class="philosophy">
+        <p>Tasks don't carry over automatically. Each morning, you review what's there and consciously decide what to keep, snooze, or drop.</p>
+        <p>Dropping a task is not failure — it's a decision. If something keeps getting pushed to tomorrow, it either needs to be done today or it doesn't need to be done at all.</p>
+        <p>No shame. No notifications. No guilt. Just intention.</p>
+      </div>
+    </section>
+
+    <footer>
+      <div class="footer-links">
+        <a href="https://github.com/pierresisson/jim">GitHub</a>
+        <a href="https://pierresisson.com">Pierre Sisson</a>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
