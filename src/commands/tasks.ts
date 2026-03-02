@@ -262,6 +262,14 @@ export function registerTasksCommand(program: Command): void {
 
       drawUnifiedTable(sections);
 
+      // Show dormant count hint in default view only
+      if (!opts.all && !opts.dormant && !opts.dropped && !opts.done) {
+        const dormant = getDormantTasks(data);
+        if (dormant.length > 0) {
+          console.log(pc.dim(`  + ${dormant.length} dormant — jim review when ready`));
+        }
+      }
+
       console.log('');
     });
 }
