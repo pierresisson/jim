@@ -6,6 +6,8 @@ export const DEFAULT_CATEGORIES: CategoryDef[] = [
   { key: 'perso', label: 'PERSO', color: 'magenta', dailyQuota: 2 },
 ];
 
+export const VALID_COLORS = ['red', 'green', 'yellow', 'blue', 'magenta', 'cyan', 'white', 'gray'] as const;
+
 const COLOR_MAP: Record<string, (s: string) => string> = {
   red: pc.red,
   green: pc.green,

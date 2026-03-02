@@ -17,12 +17,11 @@ Jim integrates with Claude Code via a global skill. Claude automatically detects
 ## Installation
 
 ```bash
-# Clone and install
-git clone git@github.com:pierresisson/Jim.git
+git clone https://github.com/pierresisson/Jim.git
 cd Jim
 bun install
 bun run build
-bun link
+npm install -g .
 ```
 
 Requires [Bun](https://bun.sh) >= 1.0.
@@ -114,6 +113,36 @@ jim done 222d8738           # By ID (partial prefix accepted)
 jim done --last             # Complete the task suggested by `jim next`
 ```
 
+### `jim edit <id>` — Edit a task
+
+```bash
+jim edit 222d8738 -t "New title"
+jim edit 222d -c perso
+jim edit 222d -p high
+jim edit 222d -t "Updated" -c pro -p low   # Multiple changes at once
+```
+
+Options:
+- `-t, --title <title>` — New title
+- `-c, --category <key>` — New category (validated against config)
+- `-p, --priority <high|medium|low>` — New priority
+
+At least one option is required. Partial ID prefix accepted.
+
+### `jim cat` — Manage categories
+
+```bash
+jim cat                              # List all categories (default)
+jim cat list                         # Same as above
+jim cat add work --label WORK --color blue --quota 3
+jim cat rm work                      # Fails if active tasks use it
+```
+
+Subcommands:
+- `list` (default) — Show all categories with their color and quota
+- `add <key>` — Add a category (`--label`, `--color`, `--quota` optional)
+- `rm <key>` — Remove a category (refuses if active tasks still use it)
+
 ### `jim delete <id>` — Permanently delete
 
 ```bash
@@ -202,3 +231,7 @@ bun run dev         # Compile in watch mode
 bun test            # Run tests
 bun run test:watch  # Tests in watch mode
 ```
+
+## License
+
+MIT — see [LICENSE](./LICENSE).

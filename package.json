@@ -2,6 +2,7 @@
   "name": "jim-cli",
   "version": "0.1.0",
   "description": "Personal task & habits assistant CLI",
+  "license": "MIT",
   "type": "module",
   "bin": {
     "jim": "src/index.ts"

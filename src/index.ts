@@ -12,6 +12,8 @@ import { registerDoneCommand } from './commands/done.js';
 import { registerRemindCommand } from './commands/remind.js';
 import { registerReviewCommand } from './commands/review.js';
 import { registerDeleteCommand } from './commands/delete.js';
+import { registerEditCommand } from './commands/edit.js';
+import { registerCatCommand } from './commands/cat.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
@@ -31,5 +33,7 @@ registerDoneCommand(program);
 registerRemindCommand(program);
 registerReviewCommand(program);
 registerDeleteCommand(program);
+registerEditCommand(program);
+registerCatCommand(program);
 
 program.parse(process.argv);
