@@ -1,0 +1,119 @@
+---
+import "@fontsource/inter/400.css";
+import "@fontsource/inter/500.css";
+import "@fontsource/playfair-display/400.css";
+import "@fontsource/playfair-display/400-italic.css";
+import "@/styles/globals.css";
+
+const title = "Jim — A Bullet Journal for the terminal";
+const description = "Fast, local, no account needed. A terminal task manager that starts each morning clean. You decide what to keep and what to let go.";
+const url = "https://jim.pierresisson.com";
+
+const commands = [
+  { name: "jim add", desc: "Add a task or habit" },
+  { name: "jim tasks", desc: "View active tasks" },
+  { name: "jim review", desc: "Review dormant tasks — keep, drop, snooze, or done" },
+  { name: "jim next", desc: "Smart suggestion based on priority and quotas" },
+  { name: "jim done", desc: "Mark a task complete" },
+  { name: "jim edit", desc: "Edit title, category, or priority" },
+  { name: "jim list", desc: "Persistent lists — groceries, birthdays, ideas" },
+  { name: "jim cat", desc: "Manage categories and daily quotas" },
+  { name: "jim remind", desc: "Quick summary of what's active" },
+  { name: "jim delete", desc: "Permanently remove a task" },
+];
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Jim",
+  description,
+  applicationCategory: "DeveloperApplication",
+  operatingSystem: "macOS, Linux",
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  author: {
+    "@type": "Person",
+    name: "Pierre Sisson",
+    url: "https://pierresisson.com",
+  },
+  license: "https://opensource.org/licenses/MIT",
+  codeRepository: "https://github.com/pierresisson/jim",
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="canonical" href={url} />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content="Pierre Sisson" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={url} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:site_name" content="Jim" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+  </head>
+  <body class="min-h-screen leading-relaxed">
+    <div class="mx-auto max-w-xl px-6">
+
+      <header class="pt-24 pb-16 sm:pt-32 sm:pb-20">
+        <h1 class="font-serif text-6xl italic tracking-tight sm:text-7xl">Jim</h1>
+        <p class="mt-4 text-lg text-muted">A Bullet Journal for the terminal.</p>
+      </header>
+
+      <section class="pb-12">
+        <p class="text-muted">Your todo list shouldn't stress you out.</p>
+        <p class="mt-4 text-muted">Jim is fast, local, and needs no account. Each morning starts clean. Overdue tasks don't scream at you — you decide what to keep and what to let go.</p>
+      </section>
+
+      <section class="pb-12">
+        <h2 class="font-serif text-2xl tracking-tight mb-6">Install</h2>
+        <pre class="rounded-md border border-border bg-surface px-6 py-5 overflow-x-auto text-sm leading-loose"><code>git clone https://github.com/pierresisson/jim.git
+cd jim
+bun install
+bun run build
+npm install -g .</code></pre>
+      </section>
+
+      <section class="pb-12">
+        <h2 class="font-serif text-2xl tracking-tight mb-6">Commands</h2>
+        <ul class="divide-y divide-border/50">
+          {commands.map(({ name, desc }) => (
+            <li class="flex items-baseline gap-6 py-2.5 max-sm:flex-col max-sm:gap-1">
+              <span class="font-mono text-sm text-foreground shrink-0 min-w-28">{name}</span>
+              <span class="text-sm text-muted">{desc}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section class="pb-12">
+        <h2 class="font-serif text-2xl tracking-tight mb-6">Philosophy</h2>
+        <div class="border-l border-subtle pl-6 space-y-4">
+          <p class="text-muted">Tasks don't carry over automatically. Each morning, you review what's there and consciously decide what to keep, snooze, or drop.</p>
+          <p class="text-muted">Dropping a task is not failure — it's a decision. If something keeps getting pushed to tomorrow, it either needs to be done today or it doesn't need to be done at all.</p>
+          <p class="text-muted">No shame. No notifications. No guilt. Just intention.</p>
+        </div>
+      </section>
+
+      <footer class="pt-8 pb-24 text-sm text-subtle">
+        <div class="flex gap-6">
+          <a href="https://github.com/pierresisson/jim" class="text-muted underline underline-offset-4 transition-colors hover:text-foreground">GitHub</a>
+          <a href="https://pierresisson.com" class="text-muted underline underline-offset-4 transition-colors hover:text-foreground">Pierre Sisson</a>
+        </div>
+      </footer>
+
+    </div>
+  </body>
+</html>

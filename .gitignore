@@ -5,3 +5,7 @@ bun.lockb
 _bmad/
 _bmad-output/
 .claude/commands/
+site/node_modules/
+site/dist/
+site/.astro/
+site/.vercel/
